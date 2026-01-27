@@ -69,7 +69,7 @@ pub fn info(message: impl std::fmt::Display) {
 /// logger::error("sensor failure", None);
 /// logger::error("sensor failure:", Some(err));
 /// ```
-pub fn error(message: impl std::fmt::Display, extra: Option<impl std::fmt::Display>) {
+pub fn error(message: impl std::fmt::Display, extra: Option<&dyn std::fmt::Display>) {
     match extra {
         Some(e) => log::error!("{} {}", message, e),
         None => log::error!("{}", message),
