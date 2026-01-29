@@ -5,12 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
-log = "0.4.29"
-simplelog = "0.12.2"
+nmea = "0.7.0"
 tokio = { version = "1.49.0", features = ["full"] }
 tokio-serial = "5.4.5"
-[dependencies.mm2t]
-git = "ssh://git@bitbucket.org/norris14597mil/stormcrow_mm2t.git"
-package = "stormcrow_mm2t"
-tag = "v0.1.3"
+[dependencies.utils]
+git = "ssh://git@bitbucket.org/norris14597mil/stormcrow_utils.git"
+package = "stormcrow_utils"
+tag = "v0.1.10"
 features = ["mm2t-tx"]
