@@ -1,0 +1,1 @@
+pub const SITE_ID: u8 = 0x01;
