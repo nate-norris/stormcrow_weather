@@ -6,7 +6,7 @@ mod airmar_consumer;
 use utils::mm2t::{MM2TTransport, PacketT};
 use utils::logger;
 use utils::speaker::{SpeakerTx, SpeakerNotification};
-use airmar::{AirmarTx, AirmarSensorReal};
+use airmar::{AirmarTx, AirmarSensorReal, AirmarSensorMock};
 use airmar_consumer::AirmarRx;
 
 #[tokio::main]
@@ -66,13 +66,14 @@ async fn init_mm2t(speaker_tx: &SpeakerTx) -> Option<Arc<MM2TTransport>> {
 }
 
 fn spawn_airmar_detector(tx: AirmarTx, speaker_tx: SpeakerTx) {
-    let airmar = AirmarSensorReal;
-    let _airmar = AirmarSensorMock;
+    let _airmar = AirmarSensorReal;
+    let airmar = AirmarSensorMock;
 
     tokio::spawn(async move {
-        if let Err(e) = airmar.detect_weather_task(tx.clone()).await {
+        // initiate transmitting altitude and weather
+        if let Err(e) = airmar.run(tx.clone()).await {
             logger::error(
-                "Failed airmar sensor detect initialization",
+                "Failed airmar",
                 Some(e)
             );
             let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
@@ -84,6 +85,6 @@ fn spawn_airmar_consumer(rx: AirmarRx, mm2t: Arc<MM2TTransport>,
     speaker_tx: SpeakerTx) {
     tokio::spawn(async move {
         let speaker_tx = speaker_tx.clone();
-
+        //TODO
     });
 }
