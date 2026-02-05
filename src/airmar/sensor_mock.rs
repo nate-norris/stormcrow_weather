@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::pin::Pin;
 use rand::Rng;
 
@@ -14,16 +15,15 @@ impl AirmarT for AirmarSensorMock {
         Box::pin(async move {
             let mut retriever = NMEASentenceRetriever::new();
 
-            // mock communication with airmar for one time
+            // send fake altitude transmission once
             let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
-            <Self as AirmarT>::transmit_bytes(&bytes, &mut retriever, &tx).await;
+            <Self as AirmarT>::transmit_bytes(&bytes, &mut retriever, &tx).await?;
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             loop {
                 // send fake weather tranmission every three seconds
                 let bytes = <Self as AirmarT>::package_sentence(&mock_wimda_body());
-                // TODO cloning or reference of tx here... see if better way
-                <Self as AirmarT>::transmit_bytes(&bytes, &mut retriever, &tx).await;
+                <Self as AirmarT>::transmit_bytes(&bytes, &mut retriever, &tx).await?;
                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
             }
         })

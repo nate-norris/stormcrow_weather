@@ -1,6 +1,9 @@
-use tokio::serial::SerialStream;
+use std::pin::Pin;
+use tokio_serial::SerialStream;
+use tokio_serial::SerialPortBuilderExt;
+
 use super::models::AirmarTx;
-use super::trait_airmair::AirmarT;
+use super::trait_airmar::AirmarT;
 use super::nmea_sentence::NMEASentenceRetriever;
 
 pub struct AirmarSensorReal;
