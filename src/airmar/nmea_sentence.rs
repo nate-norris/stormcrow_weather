@@ -1,7 +1,5 @@
 use super::models::{NMEASentenceState, SOP, END_PACKET_BYTES};
 
-use nmea::constant::SENTENCE_MAX_LEN as MAX_LEN; // 102 characters
-
 pub(crate) struct NMEASentenceRetriever {
     state: NMEASentenceState,
     sentence_bytes: Vec<u8>,
@@ -12,11 +10,11 @@ impl NMEASentenceRetriever {
     pub fn new() -> Self {
         Self {
             state: NMEASentenceState::WaitForSOP,
-            sentence_bytes: Vec::with_capacity(MAX_LEN),
+            sentence_bytes: Vec::with_capacity(nmea::SENTENCE_MAX_LEN),
         }
     }
 
-    pub fn push(&mut self, byte: u8) -> anyhow::Result<Option<&str>> {
+    pub fn push(&mut self, byte: u8) -> anyhow::Result<Option<String>> {
 
         match self.state {
             // check bytes until at start of packet
@@ -33,12 +31,13 @@ impl NMEASentenceRetriever {
 
                 // return completed sentence
                 if self.sentence_bytes.ends_with(&END_PACKET_BYTES) {
+
                     // remove <CR><LF>
-                    let sentence = std::str::from_utf8(&self.sentence_bytes[..self.sentence_bytes.len()-2])
-                        .ok();
+                    let sentence_bytes = &self.sentence_bytes[..self.sentence_bytes.len() - 2];
+                    let sentence = String::from_utf8(sentence_bytes.to_vec())?;
 
                     self.reset();
-                    return(Ok(sentence));
+                    return Ok(Some(sentence));
                 }
             }
         }
