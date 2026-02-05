@@ -1,6 +1,6 @@
 use std::pin::Pin;
-use tokio_serial::SerialStream;
-use tokio_serial::SerialPortBuilderExt;
+use tokio_serial::{SerialStream, SerialPortBuilderExt, DataBits, Parity, 
+    StopBits, FlowControl};
 
 use super::models::AirmarTx;
 use super::trait_airmar::AirmarT;
@@ -21,9 +21,16 @@ impl AirmarT for AirmarSensorReal {
 
     fn run(&self, tx:AirmarTx) ->
         Pin<Box<dyn Future<Output= anyhow::Result<()>> + Send>> {
+
         Box::pin(async move {
-            let mut port = tokio_serial::new("/dev/ttyUSB1", 4_800)
-                .open_native_async()?;
+
+            let port_builder = tokio_serial::new("/dev/ttyUSB1", 4_800)
+                .data_bits(DataBits::Eight)
+                .parity(Parity::None)
+                .stop_bits(StopBits::One)
+                .flow_control(FlowControl::None)
+                .timeout(std::time::Duration::from_secs(3));
+            let mut port = port_builder.open_native_async()?;
 
             // turn off all not needed sentences
             //      Keep WIMDA sentences active.
