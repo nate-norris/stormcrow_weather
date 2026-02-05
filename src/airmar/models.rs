@@ -8,4 +8,4 @@ pub(crate) enum NMEASentenceState {
     ReadSentence,
 }
 
-pub type AirmarTx = mpsc::Sender<&str>;
+pub type AirmarTx = mpsc::Sender<String>;
