@@ -1,3 +1,3 @@
 use tokio::sync::mpsc;
 
-pub type AirmarRx = mpsc::Receiver<&str>;
+pub type AirmarRx = mpsc::Receiver<String>;
