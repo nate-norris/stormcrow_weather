@@ -17,4 +17,13 @@ pub(crate) trait AirmarT {
         );
         complete.into_bytes()
     }
+
+    async fn send_bytes(bytes: &[u8], sentence_retriever: NMEASentenceRetriever, airmar_tx: AirmarTx) -> anyhow::Result<()> {
+        for byte in bytes {
+            if let Some(complete_sentence) = sentence_retriever.push(*byte) {
+                tx.send(complete_sentence.to_owned()).await?;
+            }
+        }
+        Ok(())
+    }
 }
