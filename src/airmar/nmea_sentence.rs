@@ -44,7 +44,7 @@ impl NMEASentenceRetriever {
         Ok(None)
     }
 
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.state = NMEASentenceState::WaitForSOP;
         self.sentence_bytes.clear();
     }
