@@ -4,7 +4,7 @@ use tokio::sync::mpsc;
 mod airmar;
 mod airmar_consumer;
 
-use utils::mm2t::{MM2TTransport, PacketT};
+use utils::mm2t::MM2TTransport;
 use utils::logger;
 use utils::speaker::{SpeakerTx, SpeakerRx, SpeakerNotification, speaker_consume_task};
 use airmar::{AirmarTx, AirmarT, AirmarSensorReal, AirmarSensorMock};
@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     // serial radio packets
     //  NOTE: failed init here is a failed program and will 
     //  notify through SpeakerNotification
-    let mm2t: Option<Arc<MM2TTransport>> = init_mm2t(&speaker_tx).await?.ok();
+    let mm2t: Option<Arc<MM2TTransport>> = init_mm2t(&speaker_tx).await;
 
     if let Some(m) = mm2t {
         // initiate AirmarTx for weather detection
@@ -72,7 +72,7 @@ fn spawn_airmar_detector(tx: AirmarTx, speaker_tx: SpeakerTx) {
 
     tokio::spawn(async move {
         // initiate transmitting altitude and weather
-        if let Err(e) = airmar.run(tx.clone()).await {
+        if let Err(e) = airmar.run(tx).await {
             logger::error(
                 "Failed airmar",
                 Some(e)
