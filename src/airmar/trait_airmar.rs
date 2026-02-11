@@ -1,7 +1,7 @@
 
 use std::pin::Pin;
 use std::future::Future;
-use super::models::{AirmarTx, SOP, END_PACKET_BYTES};
+use super::models::{AirmarTx, SOP, CHECKSUM_DELIMITER, END_PACKET_BYTES};
 use super::nmea_sentence::NMEASentenceRetriever;
 
 pub(crate) trait AirmarT {
@@ -13,7 +13,8 @@ pub(crate) trait AirmarT {
             b| acc ^ b);
         let complete = format!("{}{}*{:02X}{}", 
             SOP, 
-            s, 
+            s,
+            CHECKSUM_DELIMITER,
             checksum,
             std::str::from_utf8(&END_PACKET_BYTES).unwrap()
         );
