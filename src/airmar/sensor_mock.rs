@@ -10,8 +10,8 @@ pub struct AirmarSensorMock;
 
 impl AirmarT for AirmarSensorMock {
 
-    fn run(&self, tx: AirmarTx) ->
-        Pin<Box<dyn Future<Output= anyhow::Result<()>> + Send>> {
+    fn run<'a>(&'a self, tx: AirmarTx)
+        -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send + 'a>> {
         Box::pin(async move {
             let mut retriever = NMEASentenceRetriever::new();
 
