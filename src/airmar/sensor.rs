@@ -43,7 +43,7 @@ impl AirmarT for AirmarSensorReal {
 }
 
 impl AirmarSensorReal {
-    
+
     async fn power_on_self_test(&self, port: &mut SerialStream, 
         tx: AirmarTx, retriever: &mut NMEASentenceRetriever) 
         -> anyhow::Result<()> {
@@ -130,11 +130,8 @@ impl AirmarSensorReal {
                 continue;
             }
 
-            for &byte in &buf[..n] {
-                if let Some(sentence_str) = retriever.push(byte)? {
-                    tx.send(sentence_str).await?;
-                }
-            }
+            // only transmit last read bytes to size n
+            <Self as AirmarT>::transmit_bytes(&buf[..n], &mut retriever, &tx).await?;
         }
     }
 }
