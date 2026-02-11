@@ -6,8 +6,8 @@ mod airmar_consumer;
 
 use utils::mm2t::{MM2TTransport, PacketT};
 use utils::logger;
-use utils::speaker::{SpeakerTx, SpeakerNotification};
-use airmar::{AirmarTx, AirmarSensorReal, AirmarSensorMock};
+use utils::speaker::{SpeakerTx, SpeakerRx, SpeakerNotification, speaker_consume_task};
+use airmar::{AirmarTx, AirmarT, AirmarSensorReal, AirmarSensorMock};
 use airmar_consumer::AirmarRx;
 
 #[tokio::main]

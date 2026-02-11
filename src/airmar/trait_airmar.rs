@@ -4,8 +4,8 @@ use std::future::Future;
 use super::models::{AirmarTx, SOP, CHECKSUM_DELIMITER, END_PACKET_BYTES};
 use super::nmea_sentence::NMEASentenceRetriever;
 
-pub(crate) trait AirmarT {
-    
+pub trait AirmarT {
+
     fn run<'a>(&'a self, tx: AirmarTx)
         -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send + 'a>>;
 
