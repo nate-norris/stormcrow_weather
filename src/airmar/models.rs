@@ -9,4 +9,5 @@ pub(crate) enum NMEASentenceState {
     ReadSentence,
 }
 
+// raw transmission of nmea sentences
 pub type AirmarTx = mpsc::Sender<String>;
