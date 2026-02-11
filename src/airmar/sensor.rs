@@ -1,6 +1,8 @@
 use std::pin::Pin;
 use tokio_serial::{SerialStream, SerialPortBuilderExt, DataBits, Parity, 
     StopBits, FlowControl};
+use tokio::io::{AsyncWriteExt, AsyncReadExt};
+use tokio::time::{timeout, Duration};
 
 use super::models::AirmarTx;
 use super::trait_airmar::AirmarT;
@@ -8,22 +10,13 @@ use super::nmea_sentence::NMEASentenceRetriever;
 
 pub struct AirmarSensorReal;
 
-/*
-open port
-send disable-all command except WIMDA
-send GGA query (one time read)
-wait for GGA
-
-stream WIMDA forever
- */
-
 impl AirmarT for AirmarSensorReal {
 
-    fn run(&self, tx:AirmarTx) ->
-        Pin<Box<dyn Future<Output= anyhow::Result<()>> + Send>> {
+    fn run<'a>(&'a self, tx: AirmarTx)
+        -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send + 'a>> {
 
         Box::pin(async move {
-
+            // setup port
             let port_builder = tokio_serial::new("/dev/ttyUSB1", 4_800)
                 .data_bits(DataBits::Eight)
                 .parity(Parity::None)
@@ -31,52 +24,90 @@ impl AirmarT for AirmarSensorReal {
                 .flow_control(FlowControl::None)
                 .timeout(std::time::Duration::from_secs(3));
             let mut port = port_builder.open_native_async()?;
+            // determine proper nmea sentences from bytes
+            let mut sentence_retriever = NMEASentenceRetriever::new();
 
+            // confirm airmar powered on correctly
+            self.power_on_self_test();
             // turn off all not needed sentences
-            //      Keep WIMDA sentences active.
-            //      GPGGA will be read as a query only 
-            configure_sentence_transmissions(&mut port).await?;
-
+            self.configure_sentence_transmissions(&mut port).await?;
             // query for the altitude
-            detect_altitude(&mut port, tx.clone()).await?;
-            
+            self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // listen for weather
-            detect_weather(&mut port, tx).await?;
+            sentence_retriever.reset();
+            self.detect_weather(&mut port, tx, sentence_retriever).await?;
+
             Ok(())
         })
     }
 }
 
-async fn configure_sentence_transmissions(port: &mut SerialStream) 
-    -> anyhow::Result<()> {
-    Ok(())
-}
+impl AirmarSensorReal {
+    fn power_on_self_test(&self) {
+        //TODO
+    }
 
-async fn detect_altitude(port: &mut SerialStream, tx: AirMarTx) ->
-    anyhow::Result<()> {
-    //$GPQ,GGA*CS\r\n
-    Ok(())
-}
+    async fn configure_sentence_transmissions(&self, port: &mut SerialStream)
+        -> anyhow::Result<()> {
+        let bytes = Self::package_sentence("PAMTC,EN,ALL,0");
+        port.write_all(&bytes).await?;
+        Ok(())
+    }
 
-async fn detect_weather(port: &mut SerialStream, tx: AirmarTx) -> 
-    anyhow::Result<()> {
+    async fn detect_altitude(&self, port: &mut SerialStream, tx: AirmarTx, 
+        retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
 
-    //TODO enable weather transmissions
-    let mut buf = [0u8; 64];
-    let sentence = NMEASentenceRetriever::new();
+        // send query for altitude notifications to be turned on
+        let bytes = Self::package_sentence("PAMTC,ALT,Q");
+        port.write_all(&bytes).await?;
 
-    loop {
-        let n = port.read(&mut buf).await?;
+        // read query response for 5 seconds
+        let mut buf = [0u8; 64];
+        timeout(Duration::from_secs(5), async {
+            loop {
+                let n = port.read(&mut buf).await?;
+                if n == 0 {
+                    continue; // no bytes read
+                }
 
-        if n == 0 {
-            continue;
-        }
+                // process only new bytes read
+                for &byte in &buf[..n] {
+                    if let Some(sentence_str) = retriever.push(byte)? {
+                        if sentence_str.starts_with("$PAMTR,ALT,") {
+                            tx.send(sentence_str).await?;
+                            return Ok::<(), anyhow::Error>(())
+                        }
+                    }
+                }
+            }
+        }).await
+        .map_err(|_| anyhow::anyhow!("Altitude query time out"))??;
 
-        // process only new bytes read
-        for &byte in &buf[..n] {
-            if let Some(sentence_str) = sentence.push(byte)? {
-                tx.send(sentence_str).await?;
+        Ok(())
+    }
+
+    async fn detect_weather(&self, port: &mut SerialStream, tx: AirmarTx, 
+        mut retriever: NMEASentenceRetriever) -> anyhow::Result<()> {
+
+        let bytes = Self::package_sentence("PAMTC,EN,MDA,1,25");
+        port.write_all(&bytes).await?;
+
+        let mut buf = [0u8; 64];
+        loop {
+            let n = port.read(&mut buf).await?;
+            if n == 0 {
+                continue;
+            }
+
+            for &byte in &buf[..n] {
+                if let Some(sentence_str) = retriever.push(byte)? {
+                    tx.send(sentence_str).await?;
+                }
             }
         }
     }
 }
+
+
+
+
