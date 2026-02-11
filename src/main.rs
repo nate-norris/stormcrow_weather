@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use tokio::sync::mpsc;
 
 mod airmar;
 mod airmar_consumer;
@@ -24,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     // serial radio packets
     //  NOTE: failed init here is a failed program and will 
     //  notify through SpeakerNotification
-    let mm2t: Option<Arc<MM2TTransport>> = init_mm2t.await(&speaker_tx).ok();
+    let mm2t: Option<Arc<MM2TTransport>> = init_mm2t(&speaker_tx).await?.ok();
 
     if let Some(m) = mm2t {
         // initiate AirmarTx for weather detection
