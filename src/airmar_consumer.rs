@@ -8,5 +8,5 @@
 pub mod models;
 pub mod consume;
 
-pub use models::AirmarRx;
+pub use models::AirmarEventRx;
 pub use consume::airmar_consume_task;
