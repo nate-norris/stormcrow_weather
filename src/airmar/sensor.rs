@@ -28,7 +28,7 @@ impl AirmarT for AirmarSensorReal {
             let mut sentence_retriever = NMEASentenceRetriever::new();
 
             // confirm airmar powered on correctly
-            self.power_on_self_test();
+            self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // turn off all not needed sentences
             self.configure_sentence_transmissions(&mut port).await?;
             // query for the altitude
@@ -43,8 +43,39 @@ impl AirmarT for AirmarSensorReal {
 }
 
 impl AirmarSensorReal {
-    fn power_on_self_test(&self) {
-        //TODO
+    
+    async fn power_on_self_test(&self, port: &mut SerialStream, 
+        tx: AirmarTx, retriever: &mut NMEASentenceRetriever) 
+        -> anyhow::Result<()> {
+        
+        // send power on self test command
+        let bytes = Self::package_sentence("PAMTC,POST");
+        port.write_all(&bytes).await?;
+
+        // read query response for 5 seconds
+        let mut buf = [0u8; 64];
+        timeout(Duration::from_secs(5), async {
+            loop {
+                let n = port.read(&mut buf).await?;
+                if n == 0 {
+                    continue; // no bytes read
+                }
+
+                // process only new bytes read
+                for &byte in &buf[..n] {
+                    if let Some(sentence_str) = retriever.push(byte)? {
+                        if sentence_str.starts_with("$PAMTR,POST,") {
+                            tx.send(sentence_str).await?;
+                            return Ok::<(), anyhow::Error>(())
+                        }
+                    }
+                }
+            }
+
+        }).await
+        .map_err(|_| anyhow::anyhow!("POST query time out"))??;
+
+        Ok(())
     }
 
     async fn configure_sentence_transmissions(&self, port: &mut SerialStream)
@@ -57,7 +88,7 @@ impl AirmarSensorReal {
     async fn detect_altitude(&self, port: &mut SerialStream, tx: AirmarTx, 
         retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
 
-        // send query for altitude notifications to be turned on
+        // send query for altitude response
         let bytes = Self::package_sentence("PAMTC,ALT,Q");
         port.write_all(&bytes).await?;
 
