@@ -1,19 +1,43 @@
+//! provide bytes
+//! ↓
+//! push into retriever (optional but good for realism)
+//! ↓
+//! complete sentence
+//! ↓
+//! matches_expected
+//! ↓
+//! interpret
+//! ↓
+//! tx.send(event)
+//! 
 use std::future::Future;
 use std::pin::Pin;
 use rand::Rng;
 
 use super::trait_airmar::AirmarT;
 use super::nmea_sentence::NMEASentenceRetriever;
-use super::models::AirmarTx;
+use super::models::{AirmarEventTx, ExpectedSentence};
+use super::interpreter::interpret_post;
 
 pub struct AirmarSensorMock;
 
 impl AirmarT for AirmarSensorMock {
 
-    fn run<'a>(&'a self, tx: AirmarTx)
+    fn run<'a>(&'a self, tx: AirmarEventTx)
         -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send + 'a>> {
         Box::pin(async move {
             let mut retriever = NMEASentenceRetriever::new();
+
+            // fake POST response
+            let bytes = <Self as AirmarT>::package_sentence(&mock_post_body());
+            // get full sentence from bytes
+            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)? {
+                // match sentence to post
+                if sentence.starts_with(ExpectedSentence::Post.prefix()) {
+                    // interpret the sentence and transmit
+                    tx.send(interpret_post(sentence));
+                }
+            }
 
             // send fake altitude transmission once
             let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
@@ -30,11 +54,24 @@ impl AirmarT for AirmarSensorMock {
     }
 }
 
+/// Provides a fake POST response that would occur during airmar transmission 
+/// of $PAMTC,POST.
+/// 
+/// Will randomly provide a failed post when a 1 is present in the String
+fn mock_post_body() -> String {
+    let mut rng = rand::rng();
+
+    format!("PAMTR,POST,0,0,0,0,{},0,0,0,0,0,0,0,0,0,0,0,,,,,WX",
+        rng.random_range(0..1), // air temp sensor mock failure
+    )
+}
+
 fn mock_gpgga_body() -> String {
+    // TODO have a break in altitude
     let mut rng = rand::rng();
 
     format!("GPGGA,123456,3732.00000,N,12158.00000,E,0,2,2,{:0},M,,M,,",
-        rng.random_range(2800..3200),
+        rng.random_range(2800..3200), // random altitude
     )
 }
 
