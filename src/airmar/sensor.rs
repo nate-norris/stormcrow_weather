@@ -38,10 +38,10 @@ impl AirmarT for AirmarSensorReal {
             // determine proper nmea sentences from bytes
             let mut sentence_retriever = NMEASentenceRetriever::new();
 
-            // confirm airmar powered on correctly
-            self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // turn off all not needed sentences
             self.configure_sentence_transmissions(&mut port).await?;
+            // confirm airmar powered on correctly
+            self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // query for the altitude
             self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // listen for weather
