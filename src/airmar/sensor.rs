@@ -55,6 +55,13 @@ impl AirmarT for AirmarSensorReal {
 
 impl AirmarSensorReal {
 
+    async fn configure_sentence_transmissions(&self, port: &mut SerialStream)
+        -> anyhow::Result<()> {
+        let bytes = Self::package_sentence("PAMTC,EN,ALL,0");
+        port.write_all(&bytes).await?;
+        Ok(())
+    }
+
     async fn power_on_self_test(&self, port: &mut SerialStream, 
         tx: AirmarTx, retriever: &mut NMEASentenceRetriever) 
         -> anyhow::Result<()> {
@@ -86,13 +93,6 @@ impl AirmarSensorReal {
         }).await
         .map_err(|_| anyhow::anyhow!("POST query time out"))??;
 
-        Ok(())
-    }
-
-    async fn configure_sentence_transmissions(&self, port: &mut SerialStream)
-        -> anyhow::Result<()> {
-        let bytes = Self::package_sentence("PAMTC,EN,ALL,0");
-        port.write_all(&bytes).await?;
         Ok(())
     }
 
