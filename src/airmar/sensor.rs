@@ -1,3 +1,14 @@
+//! read byte(s)
+//! ↓
+//! push into NMEASentenceRetriever
+//! ↓
+//! complete sentence?
+//! ↓
+//! check prefix (matches_expected)
+//! ↓
+//! interpret into AirmarEvent
+//! ↓
+//! tx.send(event)
 use std::pin::Pin;
 use tokio_serial::{SerialStream, SerialPortBuilderExt, DataBits, Parity, 
     StopBits, FlowControl};
