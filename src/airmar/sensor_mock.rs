@@ -17,10 +17,12 @@ use rand::Rng;
 use super::trait_airmar::AirmarT;
 use super::nmea_sentence::NMEASentenceRetriever;
 use super::models::{AirmarEventTx, ExpectedSentence};
-use super::interpreter::interpret_post;
+use super::interpreter::{interpret_post, interpret_altitude, interpret_wimda};
+use crate::logger;
 
 pub struct AirmarSensorMock;
 
+// TODO there is repeat structure in the three requests below. Combine if match AirmarSensorReal logic
 impl AirmarT for AirmarSensorMock {
 
     fn run<'a>(&'a self, tx: AirmarEventTx)
@@ -28,26 +30,38 @@ impl AirmarT for AirmarSensorMock {
         Box::pin(async move {
             let mut retriever = NMEASentenceRetriever::new();
 
-            // fake POST response
-            let bytes = <Self as AirmarT>::package_sentence(&mock_post_body());
-            // get full sentence from bytes
-            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)? {
-                // match sentence to post
-                if sentence.starts_with(ExpectedSentence::Post.prefix()) {
-                    // interpret the sentence and transmit
-                    tx.send(interpret_post(sentence));
-                }
+            // send fake post response once
+            let bytes = <Self as AirmarT>::package_sentence(&mock_post_body()); // fake bytes
+            // get String from NMEASentenceRetriever and comfirm POST sentence
+            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)? 
+                .filter(|s| s.starts_with(ExpectedSentence::Post.prefix())) {
+                let event = interpret_post(&sentence)?; //interpret the AirmarEvent
+                tx.send(event); // transmit the event
             }
-
-            // send fake altitude transmission once
-            let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
-            <Self as AirmarT>::transmit_bytes(&bytes, &mut retriever, &tx).await?;
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
+            // send fake altitude transmission once
+            let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body()); // fake bytes
+            // get String from NMEASentenceRetriever and comfirm altitude sentence
+            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)?
+                .filter(|s| s.starts_with(ExpectedSentence::Alt.prefix())) {
+                let event = interpret_altitude(&sentence)?; // interpret the AirmarEvent
+                tx.send(event); 
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+
+            // send fake weather tranmission every three seconds
             loop {
-                // send fake weather tranmission every three seconds
+                // get fake bytes
                 let bytes = <Self as AirmarT>::package_sentence(&mock_wimda_body());
-                <Self as AirmarT>::transmit_bytes(&bytes, &mut retriever, &tx).await?;
+                // get String from NMEASentenceRetriever and confirm WIMDA sentence
+                if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)?
+                    .filter(|s| s.starts_with(ExpectedSentence::Wimda.prefix())) {
+                    // interpret the string and transmit the AirmarEventTx::Wimda
+                    if let Err(e) = interpret_wimda(&sentence).map(|event| tx.send(event)) {
+                        logger::error("WIMDA parse failed", Some(e));
+                    }
+                }
                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
             }
         })
@@ -60,9 +74,9 @@ impl AirmarT for AirmarSensorMock {
 /// Will randomly provide a failed post when a 1 is present in the String
 fn mock_post_body() -> String {
     let mut rng = rand::rng();
-
+    // TODO have a break in POST
     format!("PAMTR,POST,0,0,0,0,{},0,0,0,0,0,0,0,0,0,0,0,,,,,WX",
-        rng.random_range(0..1), // air temp sensor mock failure
+        rng.random_range(0..=1), // air temp sensor mock failure
     )
 }
 
