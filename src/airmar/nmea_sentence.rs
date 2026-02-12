@@ -29,6 +29,12 @@ impl NMEASentenceRetriever {
             NMEASentenceState::ReadSentence => {
                 self.sentence_bytes.push(byte);
 
+                // beyond max length discard the packet
+                if self.sentence_bytes.len() > nmea::SENTENCE_MAX_LEN {
+                    self.reset();
+                    return Ok(None);
+                }
+
                 // return completed sentence
                 if self.sentence_bytes.ends_with(&END_PACKET_BYTES) {
 
