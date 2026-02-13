@@ -91,7 +91,7 @@ impl AirmarSensorReal {
         Ok(())
     }
 
-    async fn detect_altitude(&self, port: &mut SerialStream, tx: AirmarTx, 
+    async fn detect_altitude(&self, port: &mut SerialStream, tx: AirmarEventTx, 
         retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
 
         // send query for altitude response
@@ -107,14 +107,11 @@ impl AirmarSensorReal {
                     continue; // no bytes read
                 }
 
-                // process only new bytes read
-                for &byte in &buf[..n] {
-                    if let Some(sentence_str) = retriever.push(byte)? {
-                        if sentence_str.starts_with("$PAMTR,ALT,") {
-                            tx.send(sentence_str).await?;
-                            return Ok::<(), anyhow::Error>(())
-                        }
-                    }
+                if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&buf[..n], retriever)?
+                    .filter(|s| s.starts_with(ExpectedSentence::Alt.prefix())) {
+                    let event = interpret_altitude(&sentence)?; //interpret the AirmarEvent
+                    tx.send(event);
+                    return Ok::<(), anyhow::Error>(())
                 }
             }
         }).await
