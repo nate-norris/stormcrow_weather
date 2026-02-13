@@ -58,13 +58,14 @@ impl AirmarT for AirmarSensorMock {
             loop {
                 // get fake bytes
                 let bytes = <Self as AirmarT>::package_sentence(&mock_wimda_body());
-                // get String from NMEASentenceRetriever and confirm WIMDA sentence
-                if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)?
-                    .filter(|s| s.starts_with(ExpectedSentence::Wimda.prefix())) {
-                    // interpret the string and transmit the AirmarEventTx::Wimda
-                    if let Err(e) = interpret_wimda(&sentence).map(|event| tx.send(event)) {
-                        logger::error("WIMDA parse failed", Some(e));
-                    }
+                if let Err(e) = Self::process_expected_sentence(
+                    &bytes, 
+                    &mut retriever, 
+                    ExpectedSentence::Wimda, 
+                    interpret_wimda, 
+                    &tx
+                ) {
+                    logger::error("WIMDA parse failed", Some(e));
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
             }

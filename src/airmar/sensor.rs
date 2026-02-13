@@ -142,12 +142,14 @@ impl AirmarSensorReal {
                 continue;
             }
 
-            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&buf[..n], retriever)?
-                .filter(|s| s.starts_with(ExpectedSentence::Wimda.prefix())) {
-
-                if let Err(e) = interpret_wimda(&sentence).map(|event| tx.send(event)) {
-                    logger::error("WIMDA parse failed", Some(e));
-                }
+            if let Err(e) = Self::process_expected_sentence(
+                &buf[..n], 
+                retriever, 
+                ExpectedSentence::Wimda, 
+                interpret_wimda, 
+                &tx
+            ) {
+                logger::error("WIMDA parse failed", Some(e));
             }
         }
     }
