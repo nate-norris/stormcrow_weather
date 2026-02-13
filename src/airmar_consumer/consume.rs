@@ -1,3 +1,7 @@
+use std::pin::Pin;
+use tokio::time::{sleep, Duration, Sleep};
+use std::future::Future;
+
 use super::models::{AirmarEventRx, ConsumerState};
 use crate::airmar::AirmarEvent;
 use utils::speaker::{SpeakerTx, SpeakerNotification};
@@ -6,38 +10,64 @@ use utils::speaker::{SpeakerTx, SpeakerNotification};
 // get the transmitted nmea sentence fully parse by nmea library
 // use weather_packet to form PacketT
 // send over mm2t the completed packet
-pub async fn airmar_consume_task(mut event_rx: AirmarEventRx, speaker_tx: SpeakerTx) {
+pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx: SpeakerTx, mut on_success: F) 
+    where F: FnMut(f32, f32, f32, f32, f32, f32) -> Fut + Send + 'static,
+    Fut: Future<Output = ()> + Send + 'static {
 
     let mut state = ConsumerState::WaitingForPOST;
     let mut altitude: Option<f32> = None;
-    while let Some(event) = event_rx.recv().await {
-        //TODO result to error state in certain situations?
+    let mut watchdog: Option<Pin<Box<Sleep>>> = None;
+    let timeout = Duration::from_secs(30);
 
-        match (&state, &event) {
-            // failed post read
-            (ConsumerState::WaitingForPOST, AirmarEvent::Post(true)) => {
-                state = ConsumerState::WaitingForAltitude; 
-            }
-            // good post read
-            (ConsumerState::WaitingForPOST, AirmarEvent::Post(false)) => {
-                let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
-            }
-            // altitude read
-            (ConsumerState::WaitingForAltitude, AirmarEvent::Altitude { meters }) => {
-                if clear_altitude(*meters) {
-                    state = ConsumerState::ReadyForWeather;
-                    altitude = Some(*meters);
-                } else {
-                    let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
-                }   
-            }
-            //
-            (ConsumerState::ReadyForWeather, AirmarEvent::Wimda { wind_full, wind_dir, temp, humidity, baro }) => {
-                if clear_wimda(*wind_full, *wind_dir, *temp, *humidity, *baro) {
+    loop{
+        tokio::select! {
 
+            Some(event) = event_rx.recv() => {
+            // while let Some(event) = event_rx.recv().await {
+                match (&state, &event) {
+                    // failed post read
+                    (ConsumerState::WaitingForPOST, AirmarEvent::Post(true)) => {
+                        state = ConsumerState::WaitingForAltitude; 
+                    }
+                    // good post read
+                    (ConsumerState::WaitingForPOST, AirmarEvent::Post(false)) => {
+                        let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
+                    }
+                    // altitude read
+                    (ConsumerState::WaitingForAltitude, AirmarEvent::Altitude { meters }) => {
+                        if clear_altitude(*meters) {
+                            state = ConsumerState::ReadyForWeather;
+                            altitude = Some(*meters);
+                            // on first init of airmar begin watchdog counter
+                            watchdog = Some(Box::pin(sleep(timeout)));
+                        } else {
+                            let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
+                        }   
+                    }
+                    // weather read
+                    (ConsumerState::ReadyForWeather, AirmarEvent::Wimda { wind_full, wind_dir, temp, humidity, baro }) => {
+                        if clear_wimda(*wind_full, *wind_dir, *temp, *humidity, *baro) {
+                            // call closure
+                            on_success(*wind_full, *wind_dir, *temp, *humidity, *baro, altitude.unwrap()).await;
+                            // reset watchdog after every success for next timeout
+                            watchdog = Some(Box::pin(sleep(timeout)));
+                        }
+                    }
+                    _ => {}
                 }
             }
-            _ => {}
+
+            _ = async {
+                match &mut watchdog {
+                    Some(t) => {
+                        t.as_mut().await;
+                    },
+                    None => std::future::pending::<()>().await,
+                }
+            } => {
+                // let _ = speaker_tx.send(SpeakerNotification::WeatherTimeout).await;
+                watchdog = None;
+            }
         }
     }
 
