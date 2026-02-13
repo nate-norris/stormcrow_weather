@@ -86,7 +86,7 @@ impl AirmarSensorReal {
                     ExpectedSentence::Post, 
                     interpret_post, 
                     &tx
-                )? {
+                ).await? {
                     return Ok::<(), anyhow::Error>(())
                 }
             }
@@ -118,7 +118,7 @@ impl AirmarSensorReal {
                     ExpectedSentence::Alt, 
                     interpret_altitude, 
                     &tx
-                )? {
+                ).await? {
                     return Ok::<(), anyhow::Error>(())
                 }
             }
@@ -148,7 +148,7 @@ impl AirmarSensorReal {
                 ExpectedSentence::Wimda, 
                 interpret_wimda, 
                 &tx
-            ) {
+            ).await {
                 logger::error("WIMDA parse failed", Some(e));
             }
         }

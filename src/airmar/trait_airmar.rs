@@ -37,7 +37,7 @@ pub trait AirmarT {
         Ok(None)
     }
 
-    fn process_expected_sentence(bytes: &[u8], retriever: 
+    async fn process_expected_sentence(bytes: &[u8], retriever: 
         &mut NMEASentenceRetriever, expected: ExpectedSentence, interpret_fn: 
         fn(&str) -> anyhow::Result<AirmarEvent>, tx: &AirmarEventTx) 
         -> anyhow::Result<bool> {
@@ -45,7 +45,7 @@ pub trait AirmarT {
         if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(bytes, retriever)? 
             .filter(|s| s.starts_with(expected.prefix())) {
             let event = interpret_fn(&sentence)?; //interpret the AirmarEvent
-            tx.send(event); // transmit the event
+            tx.send(event).await?; // transmit the event
             return Ok(true);
         }
         Ok(false)

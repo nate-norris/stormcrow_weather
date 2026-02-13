@@ -22,7 +22,6 @@ use crate::logger;
 
 pub struct AirmarSensorMock;
 
-// TODO there is repeat structure in the three requests below. Combine if match AirmarSensorReal logic
 impl AirmarT for AirmarSensorMock {
 
     fn run<'a>(&'a self, tx: AirmarEventTx)
@@ -38,7 +37,7 @@ impl AirmarT for AirmarSensorMock {
                 ExpectedSentence::Post, 
                 interpret_post, 
                 &tx
-            )?;
+            ).await?;
             retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
@@ -50,7 +49,7 @@ impl AirmarT for AirmarSensorMock {
                 ExpectedSentence::Alt, 
                 interpret_altitude, 
                 &tx
-            )?;
+            ).await?;
             retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
@@ -64,7 +63,7 @@ impl AirmarT for AirmarSensorMock {
                     ExpectedSentence::Wimda, 
                     interpret_wimda, 
                     &tx
-                ) {
+                ).await {
                     logger::error("WIMDA parse failed", Some(e));
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
