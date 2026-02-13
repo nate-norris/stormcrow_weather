@@ -112,10 +112,13 @@ impl AirmarSensorReal {
                     continue; // no bytes read
                 }
 
-                if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&buf[..n], retriever)?
-                    .filter(|s| s.starts_with(ExpectedSentence::Alt.prefix())) {
-                    let event = interpret_altitude(&sentence)?; //interpret the AirmarEvent
-                    tx.send(event);
+                if Self::process_expected_sentence(
+                    &buf[..n], 
+                    retriever, 
+                    ExpectedSentence::Alt, 
+                    interpret_altitude, 
+                    &tx
+                )? {
                     return Ok::<(), anyhow::Error>(())
                 }
             }

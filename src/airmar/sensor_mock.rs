@@ -39,16 +39,19 @@ impl AirmarT for AirmarSensorMock {
                 interpret_post, 
                 &tx
             )?;
+            retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake altitude transmission once
-            let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body()); // fake bytes
-            // get String from NMEASentenceRetriever and comfirm altitude sentence
-            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)?
-                .filter(|s| s.starts_with(ExpectedSentence::Alt.prefix())) {
-                let event = interpret_altitude(&sentence)?; // interpret the AirmarEvent
-                tx.send(event); 
-            }
+            let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
+            Self::process_expected_sentence(
+                &bytes, 
+                &mut retriever, 
+                ExpectedSentence::Alt, 
+                interpret_altitude, 
+                &tx
+            )?;
+            retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake weather tranmission every three seconds
