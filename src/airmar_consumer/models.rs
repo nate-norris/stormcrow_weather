@@ -1,5 +1,5 @@
 use tokio::sync::mpsc;
 
-use crate::airmar_interpreter::AirmarEvent;
+use crate::airmar::AirmarEvent;
 
 pub type AirmarEventRx = mpsc::Receiver<AirmarEvent>;
