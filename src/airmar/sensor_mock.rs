@@ -32,7 +32,7 @@ impl AirmarT for AirmarSensorMock {
 
             // send fake post response once
             let bytes = <Self as AirmarT>::package_sentence(&mock_post_body()); // fake bytes
-            <Self as AirmarT>::process_expected_sentence(
+            Self::process_expected_sentence(
                 &bytes, 
                 &mut retriever, 
                 ExpectedSentence::Post, 
