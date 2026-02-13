@@ -3,19 +3,21 @@ use tokio::sync::mpsc;
 
 mod airmar;
 mod airmar_consumer;
+mod weather_packet;
 
-use utils::mm2t::MM2TTransport;
+use utils::mm2t::{MM2TTransport, PacketT};
 use utils::logger;
 use utils::speaker::{SpeakerTx, SpeakerRx, SpeakerNotification, speaker_consume_task};
-use airmar::{AirmarTx, AirmarT, AirmarSensorReal, AirmarSensorMock};
-use airmar_consumer::AirmarRx;
+use airmar::{AirmarEventTx, AirmarT, AirmarSensorReal, AirmarSensorMock};
+use airmar_consumer::AirmarEventRx;
+use weather_packet::WeatherPacket;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     logger::init_logger(None);
     logger::info("Weather started");
 
-    let (airmar_tx, airmar_rx): (AirmarTx, AirmarRx)
+    let (event_tx, event_rx): (AirmarEventTx, AirmarEventRx) 
         = mpsc::channel(32);
 
     // speaker for SpeakerNotifications to listen for SpeakerTx
@@ -28,13 +30,13 @@ async fn main() -> anyhow::Result<()> {
     let mm2t: Option<Arc<MM2TTransport>> = init_mm2t(&speaker_tx).await;
 
     if let Some(m) = mm2t {
-        // initiate AirmarTx for weather detection
-        spawn_airmar_detector(airmar_tx.clone(), speaker_tx.clone());
+        // initiate airmar and tx of AirmarEventTx
+        spawn_airmar_detector(event_tx, speaker_tx.clone());
 
-        // initiate AirmarRx to listen for weather sentences
+        // initiate consumer of parsed AirmarEvent
         //      sends mm2t packet
-        //      handles SpekaerNotifications
-        spawn_airmar_consumer(airmar_rx, m, speaker_tx.clone());
+        //      handles SpeakerNotifications
+        spawn_airmar_consumer(event_rx, m, speaker_tx.clone());
     }
     Ok(())
 }
@@ -66,7 +68,7 @@ async fn init_mm2t(speaker_tx: &SpeakerTx) -> Option<Arc<MM2TTransport>> {
     }
 }
 
-fn spawn_airmar_detector(tx: AirmarTx, speaker_tx: SpeakerTx) {
+fn spawn_airmar_detector(tx: AirmarEventTx, speaker_tx: SpeakerTx) {
     let _airmar = AirmarSensorReal;
     let airmar = AirmarSensorMock;
 
@@ -82,10 +84,22 @@ fn spawn_airmar_detector(tx: AirmarTx, speaker_tx: SpeakerTx) {
     });
 }
 
-fn spawn_airmar_consumer(rx: AirmarRx, mm2t: Arc<MM2TTransport>, 
+fn spawn_airmar_consumer(event_rx: AirmarEventRx, mm2t: Arc<MM2TTransport>, 
     speaker_tx: SpeakerTx) {
+
     tokio::spawn(async move {
-        let speaker_tx = speaker_tx.clone();
-        //TODO
+        airmar_consumer::airmar_consume_task(event_rx, speaker_tx.clone(),
+            move |wind_full, wind_dir, temp, humidity, baro, alt| {
+            let speaker_tx = speaker_tx.clone();
+            let mm2t = Arc::clone(&mm2t);
+
+            async move {
+                let packet = WeatherPacket::new(alt, wind_full, wind_dir, temp, humidity, baro);
+                if let Err(e) = mm2t.send(&packet.to_bytes()).await {
+                    logger::error("Failed to send weather packet", Some(e));
+                    let _ = speaker_tx.send(SpeakerNotification::RadioError).await;
+                }
+            }
+        }).await;
     });
 }
