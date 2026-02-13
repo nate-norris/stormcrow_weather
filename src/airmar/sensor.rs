@@ -15,7 +15,8 @@ use tokio_serial::{SerialStream, SerialPortBuilderExt, DataBits, Parity,
 use tokio::io::{AsyncWriteExt, AsyncReadExt};
 use tokio::time::{timeout, Duration};
 
-use super::models::AirmarTx;
+use super::models::{AirmarEventTx, ExpectedSentence};
+use super::interpreter::{interpret_post, interpret_altitude, interpret_wimda};
 use super::trait_airmar::AirmarT;
 use super::nmea_sentence::NMEASentenceRetriever;
 
@@ -23,7 +24,7 @@ pub struct AirmarSensorReal;
 
 impl AirmarT for AirmarSensorReal {
 
-    fn run<'a>(&'a self, tx: AirmarTx)
+    fn run<'a>(&'a self, tx: AirmarEventTx)
         -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send + 'a>> {
 
         Box::pin(async move {
@@ -62,10 +63,8 @@ impl AirmarSensorReal {
         Ok(())
     }
 
-    async fn power_on_self_test(&self, port: &mut SerialStream, 
-        tx: AirmarTx, retriever: &mut NMEASentenceRetriever) 
-        -> anyhow::Result<()> {
-        
+    async fn power_on_self_test(&self, port: &mut SerialStream,
+        tx: AirmarEventTx, retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
         // send power on self test command
         let bytes = Self::package_sentence("PAMTC,POST");
         port.write_all(&bytes).await?;
@@ -79,17 +78,13 @@ impl AirmarSensorReal {
                     continue; // no bytes read
                 }
 
-                // process only new bytes read
-                for &byte in &buf[..n] {
-                    if let Some(sentence_str) = retriever.push(byte)? {
-                        if sentence_str.starts_with("$PAMTR,POST,") {
-                            tx.send(sentence_str).await?;
-                            return Ok::<(), anyhow::Error>(())
-                        }
-                    }
+                if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&buf[..n], retriever)?
+                    .filter(|s| s.starts_with(ExpectedSentence::Post.prefix())) {
+                    let event = interpret_post(&sentence)?; //interpret the AirmarEvent
+                    tx.send(event); // transmit the event
+                    return Ok::<(), anyhow::Error>(())
                 }
             }
-
         }).await
         .map_err(|_| anyhow::anyhow!("POST query time out"))??;
 
