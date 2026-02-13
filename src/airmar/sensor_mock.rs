@@ -32,12 +32,13 @@ impl AirmarT for AirmarSensorMock {
 
             // send fake post response once
             let bytes = <Self as AirmarT>::package_sentence(&mock_post_body()); // fake bytes
-            // get String from NMEASentenceRetriever and comfirm POST sentence
-            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&bytes, &mut retriever)? 
-                .filter(|s| s.starts_with(ExpectedSentence::Post.prefix())) {
-                let event = interpret_post(&sentence)?; //interpret the AirmarEvent
-                tx.send(event); // transmit the event
-            }
+            <Self as AirmarT>::process_expected_sentence(
+                &bytes, 
+                &mut retriever, 
+                ExpectedSentence::Post, 
+                interpret_post, 
+                &tx
+            )?;
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake altitude transmission once
