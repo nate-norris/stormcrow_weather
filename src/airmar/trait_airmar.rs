@@ -1,7 +1,9 @@
 
 use std::pin::Pin;
 use std::future::Future;
-use super::models::{AirmarEventTx, SOP, CHECKSUM_DELIMITER, END_PACKET_BYTES};
+
+use super::models::{AirmarEvent, AirmarEventTx, SOP, CHECKSUM_DELIMITER, END_PACKET_BYTES, 
+    ExpectedSentence};
 use super::nmea_sentence::NMEASentenceRetriever;
 
 pub trait AirmarT {
@@ -33,5 +35,19 @@ pub trait AirmarT {
         }
 
         Ok(None)
+    }
+
+    fn process_expected_sentence(bytes: &[u8], retriever: 
+        &mut NMEASentenceRetriever, expected: ExpectedSentence, interpret_fn: 
+        fn(&str) -> anyhow::Result<AirmarEvent>, tx: &AirmarEventTx) 
+        -> anyhow::Result<bool> {
+
+        if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(bytes, retriever)? 
+            .filter(|s| s.starts_with(expected.prefix())) {
+            let event = interpret_fn(&sentence)?; //interpret the AirmarEvent
+            tx.send(event); // transmit the event
+            return Ok(true);
+        }
+        Ok(false)
     }
 }
