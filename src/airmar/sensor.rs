@@ -19,6 +19,7 @@ use super::models::{AirmarEventTx, ExpectedSentence};
 use super::interpreter::{interpret_post, interpret_altitude, interpret_wimda};
 use super::trait_airmar::AirmarT;
 use super::nmea_sentence::NMEASentenceRetriever;
+use crate::logger;
 
 pub struct AirmarSensorReal;
 
@@ -44,10 +45,11 @@ impl AirmarT for AirmarSensorReal {
             // confirm airmar powered on correctly
             self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // query for the altitude
+            sentence_retriever.reset();
             self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // listen for weather
             sentence_retriever.reset();
-            self.detect_weather(&mut port, tx, sentence_retriever).await?;
+            self.detect_weather(&mut port, tx, &mut sentence_retriever).await?;
 
             Ok(())
         })
@@ -78,10 +80,13 @@ impl AirmarSensorReal {
                     continue; // no bytes read
                 }
 
-                if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&buf[..n], retriever)?
-                    .filter(|s| s.starts_with(ExpectedSentence::Post.prefix())) {
-                    let event = interpret_post(&sentence)?; //interpret the AirmarEvent
-                    tx.send(event); // transmit the event
+                if Self::process_expected_sentence(
+                    &buf[..n], 
+                    retriever, 
+                    ExpectedSentence::Post, 
+                    interpret_post, 
+                    &tx
+                )? {
                     return Ok::<(), anyhow::Error>(())
                 }
             }
@@ -120,9 +125,10 @@ impl AirmarSensorReal {
         Ok(())
     }
 
-    async fn detect_weather(&self, port: &mut SerialStream, tx: AirmarTx, 
-        mut retriever: NMEASentenceRetriever) -> anyhow::Result<()> {
+    async fn detect_weather(&self, port: &mut SerialStream, tx: AirmarEventTx, 
+        retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
 
+        // begin weather notifications
         let bytes = Self::package_sentence("PAMTC,EN,MDA,1,25");
         port.write_all(&bytes).await?;
 
@@ -133,8 +139,13 @@ impl AirmarSensorReal {
                 continue;
             }
 
-            // only transmit last read bytes to size n
-            <Self as AirmarT>::transmit_bytes(&buf[..n], &mut retriever, &tx).await?;
+            if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(&buf[..n], retriever)?
+                .filter(|s| s.starts_with(ExpectedSentence::Wimda.prefix())) {
+
+                if let Err(e) = interpret_wimda(&sentence).map(|event| tx.send(event)) {
+                    logger::error("WIMDA parse failed", Some(e));
+                }
+            }
         }
     }
 }
