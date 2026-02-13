@@ -1,3 +1,4 @@
+use utils::mm2t::PacketT;
 use super::site_id::SITE_ID;
 
 pub struct WeatherPacket {
@@ -5,14 +6,14 @@ pub struct WeatherPacket {
 }
 
 impl WeatherPacket {
-    pub fn new(altitude: u8, wind_full: u8, wind_dir: f32, temp: f32, 
+    pub fn new(altitude: f32, wind_full: f32, wind_dir: f32, temp: f32, 
         humdity: f32, baro: f32) -> Self {
 
         let site_id = SITE_ID; //TODO read from changing file
-        let mut buf = Vec::with_capacity(32);
+        let mut buf = Vec::with_capacity(25);
         buf.push(site_id);
-        buf.push(altitude);
-        buf.push(wind_full);
+        buf.extend_from_slice(&altitude.to_le_bytes());
+        buf.extend_from_slice(&wind_full.to_le_bytes());
         buf.extend_from_slice(&wind_dir.to_le_bytes());
         buf.extend_from_slice(&temp.to_le_bytes());
         buf.extend_from_slice(&humdity.to_le_bytes());
