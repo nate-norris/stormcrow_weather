@@ -43,6 +43,8 @@ impl NMEASentenceRetriever {
                     let sentence = String::from_utf8(sentence_bytes.to_vec())?;
 
                     self.reset();
+                    println!("I have a complete sentence pushed");
+                    println!("{}", sentence);
                     return Ok(Some(sentence));
                 }
             }
