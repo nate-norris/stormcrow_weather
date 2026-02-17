@@ -42,7 +42,6 @@ impl AirmarT for AirmarSensorMock {
             }
             retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-            println!("sent fake post");
 
             // send fake altitude transmission once
             let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
@@ -55,7 +54,6 @@ impl AirmarT for AirmarSensorMock {
             ).await?;
             retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-            println!("sent fake altitude");
 
             // send fake weather tranmission every three seconds
             loop {
