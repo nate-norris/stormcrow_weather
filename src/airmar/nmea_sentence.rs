@@ -41,15 +41,11 @@ impl NMEASentenceRetriever {
 
                 // return completed sentence
                 if self.sentence_bytes.ends_with(&END_PACKET_BYTES) {
-                    println!("youve hit the end of the packet");
-
                     // remove <CR><LF>
                     let sentence_bytes = &self.sentence_bytes[..self.sentence_bytes.len() - 2];
                     let sentence = String::from_utf8(sentence_bytes.to_vec())?;
 
                     self.reset();
-                    println!("I have a complete sentence pushed");
-                    println!("{}", sentence);
                     return Ok(Some(sentence));
                 }
             }
