@@ -25,6 +25,8 @@ pub trait AirmarT {
         let hex = format!("{:02X}", checksum); //hh checksum field
         packet.extend_from_slice(hex.as_bytes());
 
+        println!("In package_sentence");
+        println!("{:?}", packet);
         packet
     }
 
