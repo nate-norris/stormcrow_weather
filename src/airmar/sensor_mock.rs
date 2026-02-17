@@ -84,7 +84,7 @@ impl AirmarT for AirmarSensorMock {
 fn mock_post_body() -> String {
     let mut rng = rand::rng();
     format!("PAMTR,POST,0,0,0,0,{},0,0,0,0,0,0,0,0,0,0,0,,,,,WX",
-        rng.random_range(0..=1), // air temp sensor mock failure
+        rng.random_range(0..1), // air temp sensor mock failure
     )
 }
 
