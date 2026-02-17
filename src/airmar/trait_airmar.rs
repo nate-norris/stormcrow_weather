@@ -36,6 +36,7 @@ pub trait AirmarT {
         
         for &byte in bytes {
             if let Some(complete_sentence) = sentence_retriever.push(byte)? {
+                println!("have a sentence {:?}", complete_sentence);
                 return Ok(Some(complete_sentence))
             }
         }
@@ -49,7 +50,7 @@ pub trait AirmarT {
         -> anyhow::Result<bool> {
 
         
-
+        println!("expected: {}", expected.prefix());
         if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(bytes, retriever)? 
             .filter(|s| s.starts_with(expected.prefix())) {
             println!("made it to the filter");
