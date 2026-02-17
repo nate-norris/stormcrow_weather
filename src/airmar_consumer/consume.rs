@@ -32,6 +32,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     }
                     // good post read
                     (ConsumerState::WaitingForPOST, AirmarEvent::Post(false)) => {
+                        println!("faulty post read!!!");
                         let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                     }
                     // altitude read
