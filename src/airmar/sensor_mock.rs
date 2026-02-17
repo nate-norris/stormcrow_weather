@@ -44,31 +44,34 @@ impl AirmarT for AirmarSensorMock {
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake altitude transmission once
-            let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
-            Self::process_expected_sentence(
-                &bytes, 
-                &mut retriever, 
-                ExpectedSentence::Alt, 
-                interpret_altitude, 
-                &tx
-            ).await?;
-            retriever.reset();
-            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+            // let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
+            // Self::process_expected_sentence(
+            //     &bytes, 
+            //     &mut retriever, 
+            //     ExpectedSentence::Alt, 
+            //     interpret_altitude, 
+            //     &tx
+            // ).await?;
+            // retriever.reset();
+            // tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake weather tranmission every three seconds
+            // loop {
+            //     // get fake bytes
+            //     let bytes = <Self as AirmarT>::package_sentence(&mock_wimda_body());
+            //     if let Err(e) = Self::process_expected_sentence(
+            //         &bytes, 
+            //         &mut retriever, 
+            //         ExpectedSentence::Wimda, 
+            //         interpret_wimda, 
+            //         &tx
+            //     ).await {
+            //         logger::error("WIMDA parse failed", Some(e));
+            //     }
+            //     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+            // }
             loop {
-                // get fake bytes
-                let bytes = <Self as AirmarT>::package_sentence(&mock_wimda_body());
-                if let Err(e) = Self::process_expected_sentence(
-                    &bytes, 
-                    &mut retriever, 
-                    ExpectedSentence::Wimda, 
-                    interpret_wimda, 
-                    &tx
-                ).await {
-                    logger::error("WIMDA parse failed", Some(e));
-                }
-                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
             }
         })
     }
