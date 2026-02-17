@@ -44,8 +44,10 @@ impl AirmarT for AirmarSensorMock {
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake altitude transmission once
+            println!("working fake altitude");
             let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
-            if ! Self::process_expected_sentence(
+            println!("bytes: {:?}", bytes);
+            if !Self::process_expected_sentence(
                 &bytes, 
                 &mut retriever, 
                 ExpectedSentence::Alt, 
