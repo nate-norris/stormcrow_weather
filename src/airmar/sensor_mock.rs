@@ -38,7 +38,7 @@ impl AirmarT for AirmarSensorMock {
                 interpret_post, 
                 &tx
             ).await? {
-                println!("failed to process mock post");
+                logger::error("AirmarSensorMock: failed POST process", None);
             }
             retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
