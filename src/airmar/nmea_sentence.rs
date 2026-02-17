@@ -21,6 +21,7 @@ impl NMEASentenceRetriever {
             NMEASentenceState::WaitForSOP => {
                 if byte == SOP {
                     self.sentence_bytes.clear();
+                    self.sentence_bytes.push(byte);
                     self.state = NMEASentenceState::ReadSentence;
                     println!("passing state WaitForSOP")
                 }
