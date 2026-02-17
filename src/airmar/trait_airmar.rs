@@ -59,6 +59,7 @@ pub trait AirmarT {
             .filter(|s| s.starts_with(expected.prefix())) {
             println!("processing string");
             let event = interpret_fn(&sentence)?; //interpret the AirmarEvent
+            println!("you have event");
             tx.send(event).await?; // transmit the event
             return Ok(true);
         }
