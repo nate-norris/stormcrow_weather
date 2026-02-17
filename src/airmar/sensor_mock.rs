@@ -45,13 +45,16 @@ impl AirmarT for AirmarSensorMock {
 
             // send fake altitude transmission once
             let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
-            Self::process_expected_sentence(
+            if ! Self::process_expected_sentence(
                 &bytes, 
                 &mut retriever, 
                 ExpectedSentence::Alt, 
                 interpret_altitude, 
                 &tx
-            ).await?;
+            ).await? {
+                logger::error("AirmarSensorMock: failed altitude init");
+                println!("failed altitude init")
+            }
             retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
