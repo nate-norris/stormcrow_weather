@@ -23,13 +23,16 @@ async fn main() -> anyhow::Result<()> {
     // speaker for SpeakerNotifications to listen for SpeakerTx
     // NOTE initialize before any tx can transmit
     let speaker_tx: SpeakerTx = init_speaker();
+    println!("init speaker_tx");
 
     // serial radio packets
     //  NOTE: failed init here is a failed program and will 
     //  notify through SpeakerNotification
     let mm2t: Option<Arc<MM2TTransport>> = init_mm2t(&speaker_tx).await;
+    println!("init mm2t");
 
     if let Some(m) = mm2t {
+        println!("mm2t exists");
         // initiate airmar and tx of AirmarEventTx
         spawn_airmar_detector(event_tx, speaker_tx.clone());
 
