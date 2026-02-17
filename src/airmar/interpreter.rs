@@ -26,6 +26,8 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent>
     }
     let all_zero: bool = zero_indices.iter().all(|&i| 
         fields.get(i) == Some(&"0"));
+    
+    println!("all zero? {}", all_zero);
 
     Ok(AirmarEvent::Post(all_zero))
 }
