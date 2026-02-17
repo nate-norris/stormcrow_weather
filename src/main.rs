@@ -38,6 +38,9 @@ async fn main() -> anyhow::Result<()> {
         //      handles SpeakerNotifications
         spawn_airmar_consumer(event_rx, m, speaker_tx.clone());
     }
+
+    // await Ctrl+C from user to end program
+    tokio::signal::ctrl_c().await.unwrap();
     Ok(())
 }
 
