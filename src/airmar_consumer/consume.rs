@@ -48,7 +48,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     }
                     // weather read
                     (ConsumerState::ReadyForWeather, AirmarEvent::Wimda { wind_full, wind_dir, temp, humidity, baro }) => {
-                        println!("got a wimda event in readyforweather")
+                        println!("got a wimda event in readyforweather");
                         if clear_wimda(*wind_full, *wind_dir, *temp, *humidity, *baro) {
                             println!("clear wimda");
                             // call closure
