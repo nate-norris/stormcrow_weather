@@ -32,7 +32,7 @@ impl ExpectedSentence {
     pub(crate) fn prefix(&self) -> &'static str {
         match self {
             ExpectedSentence::Post => "$PAMTR,POST",
-            ExpectedSentence::Alt => "$PAMTR,ALT",
+            ExpectedSentence::Alt => "$PAMTC,ALT",
             ExpectedSentence::Wimda => "$WIMDA",
         }
     }
