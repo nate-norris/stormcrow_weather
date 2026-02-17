@@ -5,6 +5,7 @@ use std::future::Future;
 use super::models::{AirmarEventRx, ConsumerState};
 use crate::airmar::AirmarEvent;
 use utils::speaker::{SpeakerTx, SpeakerNotification};
+use utils::logger;
 
 
 // get the transmitted nmea sentence fully parse by nmea library
@@ -35,21 +36,20 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     }
                     // altitude read
                     (ConsumerState::WaitingForAltitude, AirmarEvent::Altitude { meters }) => {
-                        println!("in waiting for altitude");
                         if clear_altitude(*meters) {
-                            println!("cleared altitude");
                             state = ConsumerState::ReadyForWeather;
                             altitude = Some(*meters);
                             // on first init of airmar begin watchdog counter
                             watchdog = Some(Box::pin(sleep(timeout)));
                         } else {
-                            println!("failed to clear altitude");
+                            logger::error("Failed to clear altitude initialization");
                             let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                         }   
                     }
                     // weather read
                     (ConsumerState::ReadyForWeather, AirmarEvent::Wimda { wind_full, wind_dir, temp, humidity, baro }) => {
                         if clear_wimda(*wind_full, *wind_dir, *temp, *humidity, *baro) {
+                            println!("clear wimda");
                             // call closure
                             on_success(*wind_full, *wind_dir, *temp, *humidity, *baro, altitude.unwrap()).await;
                             // reset watchdog after every success for next timeout
