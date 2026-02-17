@@ -35,6 +35,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     }
                     // altitude read
                     (ConsumerState::WaitingForAltitude, AirmarEvent::Altitude { meters }) => {
+                        println!("in waiting for altitude");
                         if clear_altitude(*meters) {
                             println!("cleared altitude");
                             state = ConsumerState::ReadyForWeather;
@@ -42,6 +43,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                             // on first init of airmar begin watchdog counter
                             watchdog = Some(Box::pin(sleep(timeout)));
                         } else {
+                            println!("failed to clear altitude");
                             let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                         }   
                     }
