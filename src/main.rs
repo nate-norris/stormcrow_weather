@@ -64,7 +64,7 @@ async fn init_mm2t(speaker_tx: &SpeakerTx) -> Option<Arc<MM2TTransport>> {
     match MM2TTransport::start("/dev/ttyUSB0").await {
         Ok(r) => Some(Arc::new(r)),
         Err(e) => {
-            logger::error("Failed mm2t init", Some(&e));
+            logger::error_with("Failed mm2t init", e);
             let _ = speaker_tx.send(SpeakerNotification::RadioError).await;
             None
         }
@@ -78,9 +78,9 @@ fn spawn_airmar_detector(tx: AirmarEventTx, speaker_tx: SpeakerTx) {
     tokio::spawn(async move {
         // initiate transmitting altitude and weather
         if let Err(e) = airmar.run(tx).await {
-            logger::error(
+            logger::error_with(
                 "Failed airmar",
-                Some(e)
+                e
             );
             let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
         }
@@ -99,7 +99,7 @@ fn spawn_airmar_consumer(event_rx: AirmarEventRx, mm2t: Arc<MM2TTransport>,
             async move {
                 let packet = WeatherPacket::new(alt, wind_full, wind_dir, temp, humidity, baro);
                 if let Err(e) = mm2t.send(&packet.to_bytes()).await {
-                    logger::error("Failed to send weather packet", Some(e));
+                    logger::error_with("Failed to send weather packet", e);
                     let _ = speaker_tx.send(SpeakerNotification::RadioError).await;
                 }
             }

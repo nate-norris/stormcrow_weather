@@ -149,7 +149,7 @@ impl AirmarSensorReal {
                 interpret_wimda, 
                 &tx
             ).await {
-                logger::error("WIMDA parse failed", Some(e));
+                logger::error_with("WIMDA parse failed", e);
             }
         }
     }
