@@ -26,7 +26,7 @@ pub trait AirmarT {
         packet.extend_from_slice(hex.as_bytes());
 
         packet.extend_from_slice(&END_PACKET_BYTES); // CRLF
-
+        println!("1: {:?}", packet);
         packet
     }
 
@@ -39,6 +39,7 @@ pub trait AirmarT {
                 return Ok(Some(complete_sentence))
             }
         }
+        println!("2: no retrieved sentence");
         Ok(None)
     }
 
