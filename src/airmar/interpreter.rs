@@ -12,7 +12,6 @@ use super::models::AirmarEvent;
 // pub(crate) fn interpret_post(nmea_sentence: String)
     // -> Result<AirmarEvent, Box<dyn std::error::Error>> {
 pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent> {
-    println!("in interpret post");
     // split comma delimited String and check for 0 at select indices
     let fields: Vec<&str> = nmea_sentence.split(',').collect();
     let zero_indices: [usize; 13] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 
@@ -26,8 +25,6 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent>
     }
     let all_zero: bool = zero_indices.iter().all(|&i| 
         fields.get(i) == Some(&"0"));
-    
-    println!("all zero? {}", all_zero);
 
     Ok(AirmarEvent::Post(all_zero))
 }

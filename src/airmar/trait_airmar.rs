@@ -39,7 +39,6 @@ pub trait AirmarT {
                 return Ok(Some(complete_sentence))
             }
         }
-        println!("No sentence made in await retriever sentence");
         Ok(None)
     }
 
@@ -48,14 +47,9 @@ pub trait AirmarT {
         fn(&str) -> anyhow::Result<AirmarEvent>, tx: &AirmarEventTx) 
         -> anyhow::Result<bool> {
 
-        println!("IN PROCESS EXPECTED SENTENCE");
-        println!("{:?}", bytes);
-
         if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(bytes, retriever)? 
             .filter(|s| s.starts_with(expected.prefix())) {
-            println!("processing string");
             let event = interpret_fn(&sentence)?; //interpret the AirmarEvent
-            println!("you have event");
             tx.send(event).await?; // transmit the event
             return Ok(true);
         }

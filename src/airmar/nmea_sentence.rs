@@ -23,19 +23,16 @@ impl NMEASentenceRetriever {
                     self.sentence_bytes.clear();
                     self.sentence_bytes.push(byte);
                     self.state = NMEASentenceState::ReadSentence;
-                    println!("passing state WaitForSOP")
                 }
             }
 
             // read the entire sentence
             NMEASentenceState::ReadSentence => {
-                println!("added byte to sentence: {}", &byte);
                 self.sentence_bytes.push(byte);
 
                 // beyond max length discard the packet
                 if self.sentence_bytes.len() > nmea::SENTENCE_MAX_LEN {
                     self.reset();
-                    println!("reached max sentence length");
                     return Ok(None);
                 }
 

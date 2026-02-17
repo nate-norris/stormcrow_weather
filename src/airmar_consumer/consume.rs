@@ -27,18 +27,16 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                 match (&state, &event) {
                     // failed post read
                     (ConsumerState::WaitingForPOST, AirmarEvent::Post(true)) => {
-                        println!("passed post");
                         state = ConsumerState::WaitingForAltitude; 
                     }
                     // good post read
                     (ConsumerState::WaitingForPOST, AirmarEvent::Post(false)) => {
-                        println!("faulty post read!!!");
                         let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                     }
                     // altitude read
                     (ConsumerState::WaitingForAltitude, AirmarEvent::Altitude { meters }) => {
                         if clear_altitude(*meters) {
-                            println!("passed altitude");
+                            println!("cleared altitude");
                             state = ConsumerState::ReadyForWeather;
                             altitude = Some(*meters);
                             // on first init of airmar begin watchdog counter
@@ -50,7 +48,6 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     // weather read
                     (ConsumerState::ReadyForWeather, AirmarEvent::Wimda { wind_full, wind_dir, temp, humidity, baro }) => {
                         if clear_wimda(*wind_full, *wind_dir, *temp, *humidity, *baro) {
-                            println!("passed clear wimda");
                             // call closure
                             on_success(*wind_full, *wind_dir, *temp, *humidity, *baro, altitude.unwrap()).await;
                             // reset watchdog after every success for next timeout
