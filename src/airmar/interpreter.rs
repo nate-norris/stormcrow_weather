@@ -65,13 +65,13 @@ pub(crate) fn interpret_wimda(nmea_sentence: &str)
         mda.wind_direction_magnetic,
         mda.air_temp_deg,
         mda.rel_humidity,
-        mda.pressure_bar
+        mda.pressure_in_hg
     );
 
     let (Some(wind_full), Some(wind_dir), Some(temp),
         Some(humidity), Some(baro),) 
         = (mda.wind_speed_ms, mda.wind_direction_magnetic, mda.air_temp_deg,
-        mda.rel_humidity, mda.pressure_bar,) 
+        mda.rel_humidity, mda.pressure_in_hg,) 
     else {
         return Err(anyhow::anyhow!("Missing required WIMDA fields"));
     };
