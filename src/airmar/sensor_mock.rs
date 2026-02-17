@@ -44,16 +44,16 @@ impl AirmarT for AirmarSensorMock {
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake altitude transmission once
-            // let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
-            // Self::process_expected_sentence(
-            //     &bytes, 
-            //     &mut retriever, 
-            //     ExpectedSentence::Alt, 
-            //     interpret_altitude, 
-            //     &tx
-            // ).await?;
-            // retriever.reset();
-            // tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+            let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
+            Self::process_expected_sentence(
+                &bytes, 
+                &mut retriever, 
+                ExpectedSentence::Alt, 
+                interpret_altitude, 
+                &tx
+            ).await?;
+            retriever.reset();
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake weather tranmission every three seconds
             // loop {
@@ -83,7 +83,6 @@ impl AirmarT for AirmarSensorMock {
 /// Will randomly provide a failed post when a 1 is present in the String
 fn mock_post_body() -> String {
     let mut rng = rand::rng();
-    // TODO have a break in POST
     format!("PAMTR,POST,0,0,0,0,{},0,0,0,0,0,0,0,0,0,0,0,,,,,WX",
         rng.random_range(0..=1), // air temp sensor mock failure
     )
