@@ -21,6 +21,7 @@ pub trait AirmarT {
             checksum,
         ).into_bytes();
         complete.extend_from_slice(&END_PACKET_BYTES);
+        println!("packaged sentence {:?}", complete);
         complete
     }
 
