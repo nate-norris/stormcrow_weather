@@ -44,9 +44,7 @@ impl AirmarT for AirmarSensorMock {
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake altitude transmission once
-            println!("working fake altitude");
             let bytes = <Self as AirmarT>::package_sentence(&mock_pamtc_alt_body());
-            println!("bytes: {:?}", bytes);
             if !Self::process_expected_sentence(
                 &bytes, 
                 &mut retriever, 
@@ -55,28 +53,24 @@ impl AirmarT for AirmarSensorMock {
                 &tx
             ).await? {
                 logger::error("AirmarSensorMock: failed altitude init");
-                println!("failed altitude init")
             }
             retriever.reset();
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             // send fake weather tranmission every three seconds
-            // loop {
-            //     // get fake bytes
-            //     let bytes = <Self as AirmarT>::package_sentence(&mock_wimda_body());
-            //     if let Err(e) = Self::process_expected_sentence(
-            //         &bytes, 
-            //         &mut retriever, 
-            //         ExpectedSentence::Wimda, 
-            //         interpret_wimda, 
-            //         &tx
-            //     ).await {
-            //         logger::error("WIMDA parse failed", Some(e));
-            //     }
-            //     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-            // }
             loop {
-                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                // get fake bytes
+                let bytes = <Self as AirmarT>::package_sentence(&mock_wimda_body());
+                if let Err(e) = Self::process_expected_sentence(
+                    &bytes, 
+                    &mut retriever, 
+                    ExpectedSentence::Wimda, 
+                    interpret_wimda, 
+                    &tx
+                ).await {
+                    logger::error_with("WIMDA parse failed", e);
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
             }
         })
     }
