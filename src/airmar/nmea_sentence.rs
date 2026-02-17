@@ -35,11 +35,13 @@ impl NMEASentenceRetriever {
                 // beyond max length discard the packet
                 if self.sentence_bytes.len() > nmea::SENTENCE_MAX_LEN {
                     self.reset();
+                    println!("reached max sentence length");
                     return Ok(None);
                 }
 
                 // return completed sentence
                 if self.sentence_bytes.ends_with(&END_PACKET_BYTES) {
+                    println!("youve hit the end of the packet");
 
                     // remove <CR><LF>
                     let sentence_bytes = &self.sentence_bytes[..self.sentence_bytes.len() - 2];
