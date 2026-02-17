@@ -51,6 +51,8 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                             on_success(*wind_full, *wind_dir, *temp, *humidity, *baro, altitude.unwrap()).await;
                             // reset watchdog after every success for next timeout
                             watchdog = Some(Box::pin(sleep(timeout)));
+                            // ensure timeout error is off
+                            let _ = speaker_tx.send(SpeakerNotification::WeatherTimeoutError(false)).await;
                         }
                     }
                     _ => {}
@@ -65,7 +67,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     None => std::future::pending::<()>().await,
                 }
             } => {
-                // let _ = speaker_tx.send(SpeakerNotification::WeatherTimeout).await;
+                let _ = speaker_tx.send(SpeakerNotification::WeatherTimeoutError(true)).await;
                 watchdog = None;
             }
         }
