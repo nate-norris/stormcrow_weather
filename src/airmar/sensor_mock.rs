@@ -45,7 +45,7 @@ impl AirmarT for AirmarSensorMock {
 
             // send fake altitude transmission once
             println!("working fake altitude");
-            let bytes = <Self as AirmarT>::package_sentence(&mock_gpgga_body());
+            let bytes = <Self as AirmarT>::package_sentence(&mock_pamtc_alt_body());
             println!("bytes: {:?}", bytes);
             if !Self::process_expected_sentence(
                 &bytes, 
@@ -93,12 +93,11 @@ fn mock_post_body() -> String {
     )
 }
 
-fn mock_gpgga_body() -> String {
-    // TODO have a break in altitude
+fn mock_pamtc_alt_body() -> String {
     let mut rng = rand::rng();
 
-    format!("GPGGA,123456,3732.00000,N,12158.00000,E,0,2,2,{:0},M,,M,,",
-        rng.random_range(2800..3200), // random altitude
+    format!("PAMTC,ALT,{:.1},0,2",
+        rng.random_range(2800.0..3200.0), // random altitude meters
     )
 }
 
