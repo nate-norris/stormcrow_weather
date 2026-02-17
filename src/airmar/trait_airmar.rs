@@ -12,8 +12,11 @@ pub trait AirmarT {
         -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send + 'a>>;
 
     fn package_sentence(s: &str) -> Vec<u8> {
+        println!("-----------------");
+        println!("original load {}", s);
         let checksum = s.bytes().fold(0u8, |acc, 
             b| acc ^ b);
+        println!("checksum {}", checksum);
         let mut complete = format!("{}{}{}{:02X}", 
             SOP, 
             s,
