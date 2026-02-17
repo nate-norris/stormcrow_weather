@@ -22,11 +22,13 @@ impl NMEASentenceRetriever {
                 if byte == SOP {
                     self.sentence_bytes.clear();
                     self.state = NMEASentenceState::ReadSentence;
+                    println!("passing state WaitForSOP")
                 }
             }
 
             // read the entire sentence
             NMEASentenceState::ReadSentence => {
+                println!("added byte to sentence: {}", &byte);
                 self.sentence_bytes.push(byte);
 
                 // beyond max length discard the packet
