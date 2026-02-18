@@ -70,7 +70,7 @@ impl AirmarT for AirmarSensorMock {
                 ).await {
                     logger::error_with("WIMDA parse failed", e);
                 }
-                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                tokio::time::sleep(std::time::Duration::from_secs(45)).await;
             }
         })
     }
