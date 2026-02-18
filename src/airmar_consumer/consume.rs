@@ -48,9 +48,8 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     }
                     // weather read
                     (ConsumerState::ReadyForWeather, AirmarEvent::Wimda { wind_full, wind_dir, temp, humidity, baro }) => {
-                        println!("got a wimda event in readyforweather");
                         if clear_wimda(*wind_full, *wind_dir, *temp, *humidity, *baro) {
-                            println!("clear wimda");
+                            println!("clear wimda, TIMEOUT RESET");
                             // call closure
                             on_success(*wind_full, *wind_dir, *temp, *humidity, *baro, altitude.unwrap()).await;
                             // reset watchdog after every success for next timeout
@@ -72,6 +71,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                 }
             } => {
                 let _ = speaker_tx.send(SpeakerNotification::WeatherTimeoutError(true)).await;
+                println!("TIMEOUT STARTED");
                 watchdog = None;
             }
         }
