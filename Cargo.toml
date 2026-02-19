@@ -7,10 +7,10 @@ edition = "2024"
 anyhow = "1.0.100"
 nmea = "0.7.0"
 rand = "0.9.2"
-tokio = { version = "1.49.0", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
 tokio-serial = "5.4.5"
 [dependencies.utils]
 git = "ssh://git@bitbucket.org/norris14597mil/stormcrow_utils.git"
 package = "stormcrow_utils"
-tag = "v0.1.16"
+tag = "v0.1.17"
 features = ["mm2t-tx"]
