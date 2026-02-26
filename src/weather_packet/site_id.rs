@@ -1,1 +1,1 @@
-pub const SITE_ID: u8 = 0x01;
+pub const SITE_ID: u8 = 0x01; //TODO pull this from external source
