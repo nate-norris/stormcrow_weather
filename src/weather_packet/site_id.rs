@@ -1,17 +1,15 @@
 use once_cell::sync::Lazy;
 use std::fs;
 use std::path::PathBuf;
-use uuid::Uuid;
 
-pub(crate) fn get_site_uuid() -> &'static [u8; 16] {
-    println!("{:?}", &SITE_UUID);
+pub(crate) fn get_site_uuid() -> &'static u8 {
     &SITE_UUID
 }
 
-static SITE_UUID: Lazy<[u8; 16]> = Lazy::new(|| {
+static SITE_UUID: Lazy<u8> = Lazy::new(|| {
 
     let path = get_path_to_id();
-    println!("calling into {:?}", path);
+
     // create the parent folder if missing
     if let Some(parent) = &path.parent().filter(|p| !p.exists()) {
         fs::create_dir_all(parent)
@@ -23,15 +21,15 @@ static SITE_UUID: Lazy<[u8; 16]> = Lazy::new(|| {
         fs::read_to_string(&path)
         .map(|s| s.trim().to_string())
         .unwrap_or_else(|_| {
-            let new_id = Uuid::new_v4().to_string();
+            let new_id = String::from("0");
             fs::write(&path, &new_id)
                 .expect("Failed writing site id in folder");
             new_id
         });
 
-    let parsed = Uuid::parse_str(&string_id).expect("invalid UUID");
-    
-    *parsed.as_bytes()
+    string_id
+        .parse::<u8>()
+        .expect("Invalid site id")
 });
 
 fn get_path_to_id() -> PathBuf {
