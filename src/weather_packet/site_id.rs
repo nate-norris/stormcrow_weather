@@ -11,7 +11,7 @@ pub(crate) fn get_site_uuid() -> &'static [u8; 16] {
 static SITE_UUID: Lazy<[u8; 16]> = Lazy::new(|| {
 
     let path = get_path_to_id();
-
+    println!("calling into {:?}", path);
     // create the parent folder if missing
     if let Some(parent) = &path.parent().filter(|p| !p.exists()) {
         fs::create_dir_all(parent)
