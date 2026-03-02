@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 pub(crate) fn get_site_uuid() -> &'static [u8; 16] {
+    println!("{:?}", &SITE_UUID);
     &SITE_UUID
 }
 
