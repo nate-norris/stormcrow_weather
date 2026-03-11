@@ -2,11 +2,11 @@ use once_cell::sync::Lazy;
 use std::fs;
 use std::path::PathBuf;
 
-pub(crate) fn get_site_uuid() -> &'static u8 {
-    &SITE_UUID
+pub(crate) fn get_site_char() -> char {
+    *SITE_ID
 }
 
-static SITE_UUID: Lazy<u8> = Lazy::new(|| {
+static SITE_ID: Lazy<char> = Lazy::new(|| {
 
     let path = get_path_to_id();
 
@@ -21,16 +21,29 @@ static SITE_UUID: Lazy<u8> = Lazy::new(|| {
         fs::read_to_string(&path)
         .map(|s| s.trim().to_string())
         .unwrap_or_else(|_| {
-            let new_id = String::from("0");
+            // NOTE: override to new char when implementing in a unique site
+            let new_id = String::from("A");
             fs::write(&path, &new_id)
                 .expect("Failed writing site id in folder");
             new_id
         });
 
-    string_id
-        .parse::<u8>()
-        .expect("Invalid site id")
+    parse_site_char(&string_id)
 });
+
+fn parse_site_char(s: &str) -> char {
+    let mut chars = s.chars();
+    let c = chars.next().expect("Empty site id");
+
+    // confirm correct character
+    if chars.next().is_some() {
+        panic!("Single char required for site id");
+    } else if !c.is_ascii_uppercase() {
+        panic!("Uppercase site id required");
+    }
+
+    c
+}
 
 fn get_path_to_id() -> PathBuf {
 

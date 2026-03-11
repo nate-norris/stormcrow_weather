@@ -10,7 +10,6 @@ once_cell = "1.21.3"
 rand = "0.9.2"
 tokio = { version = "1", features = ["full"] }
 tokio-serial = "5.4.5"
-uuid = { version = "1.21.0", features = ["v4"] }
 [dependencies.utils]
 git = "ssh://git@bitbucket.org/norris14597mil/stormcrow_utils.git"
 package = "stormcrow_utils"

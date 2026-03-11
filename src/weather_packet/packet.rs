@@ -1,5 +1,5 @@
 use utils::mm2t::PacketT;
-use super::site_id::get_site_uuid;
+use super::site_id::get_site_char;
 
 pub struct WeatherPacket {
     payload: Vec<u8>,
@@ -10,7 +10,7 @@ impl WeatherPacket {
         humdity: f32, baro: f32) -> Self {
 
         let mut buf = Vec::with_capacity(25);
-        buf.push(*get_site_uuid());
+        buf.push(get_site_char() as u8);
         buf.extend_from_slice(&altitude.to_le_bytes());
         buf.extend_from_slice(&wind_full.to_le_bytes());
         buf.extend_from_slice(&wind_dir.to_le_bytes());
