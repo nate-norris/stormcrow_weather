@@ -31,7 +31,7 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent>
 
 /// Retrieve altitude provided by $PAMTC,ALT query response
 /// 
-/// The response is formatted as $PAMTR,ALT,<fixed altitude>,<2d mode settings>,<baro settings>
+/// The response is formatted as $PAMTR,ALT,[fixed altitude],[2d mode settings],[baro settings]
 ///     where the value of fixed altitude is from -999.0 to +40,000.0 meters
 pub(crate) fn interpret_altitude(nmea_sentence: &str) 
     // -> Result<AirmarEvent, Box<dyn std::error::Error>> {
