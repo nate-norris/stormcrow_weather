@@ -2,36 +2,8 @@
 //! for uniform byte structuring of MM2T serial packets.
 //! 
 //! WeatherPayload defines the layout of paylod in WeatherPacket.
-use utils::mm2t::PacketT;
+use utils::mm2t::{PacketT, WeatherPayload};
 use super::site_id::get_site_char;
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-struct WeatherPayload {
-    site: u8,
-    altitude: f32,
-    wind_full: f32,
-    wind_dir: f32,
-    temp: f32,
-    humidity: f32,
-    baro: f32,
-}
-
-impl WeatherPayload {
-    fn encode(self) -> Vec<u8> {
-        let mut buf = Vec::with_capacity(25);
-
-        buf.push(self.site);
-        buf.extend(self.altitude.to_le_bytes());
-        buf.extend(self.wind_full.to_le_bytes());
-        buf.extend(self.wind_dir.to_le_bytes());
-        buf.extend(self.temp.to_le_bytes());
-        buf.extend(self.humidity.to_le_bytes());
-        buf.extend(self.baro.to_le_bytes());
-
-        buf
-    }
-}
 
 pub struct WeatherPacket {
     payload: Vec<u8>,
@@ -42,8 +14,9 @@ impl WeatherPacket {
         humidity: f32, baro: f32) -> Self {
 
         assert!(get_site_char().is_ascii());
+        // WeatherPayload::encode_into(self)
         let payload = WeatherPayload {
-            site: get_site_char() as u8,
+            site_id: get_site_char() as u8,
             altitude,
             wind_full,
             wind_dir,
@@ -51,7 +24,7 @@ impl WeatherPacket {
             humidity,
             baro,
         }
-        .encode();
+        .encode_into();
         
         Self { payload }
     }
