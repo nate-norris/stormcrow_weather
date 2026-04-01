@@ -59,8 +59,7 @@ pub(crate) fn interpret_wimda(nmea_sentence: &str)
     let mda = parse_mda(s)
         .map_err(|e| anyhow::anyhow!(e.to_string()))?;
 
-    println!("interpretting wimda");
-    println!("{:?} {:?} {:?} {:?} {:?}",
+    println!("ws:{:?}, wd:{:?}, temp:{:?}, hum:{:?}, baro:{:?}",
         mda.wind_speed_ms,
         mda.wind_direction_magnetic,
         mda.air_temp_deg,
