@@ -13,5 +13,5 @@ tokio-serial = "5.4.5"
 [dependencies.utils]
 git = "ssh://git@github.com/nate-norris/stormcrow_utils.git"
 package = "stormcrow_utils"
-tag = "v0.1.26"
+tag = "v0.1.27"
 features = ["mm2t-tx"]

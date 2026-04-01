@@ -782,8 +782,8 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "stormcrow_utils"
-version = "0.1.25"
-source = "git+ssh://git@github.com/nate-norris/stormcrow_utils.git?tag=v0.1.26#1ba4b0b9dd4abe952255882bbc86d5b11da77b7b"
+version = "0.1.26"
+source = "git+ssh://git@github.com/nate-norris/stormcrow_utils.git?tag=v0.1.27#52e79d1039dec6460ef121c8ccdd54ea8ff94934"
 dependencies = [
  "anyhow",
  "async-trait",
