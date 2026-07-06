@@ -36,6 +36,7 @@ pub trait AirmarT {
         
         for &byte in bytes {
             if let Some(complete_sentence) = sentence_retriever.push(byte)? {
+                println!("COMPLETE SENTENCE: {}", complete_sentence);
                 return Ok(Some(complete_sentence))
             }
         }
