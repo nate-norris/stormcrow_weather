@@ -38,19 +38,27 @@ impl AirmarT for AirmarSensorReal {
                 .timeout(std::time::Duration::from_secs(3));
             println!("set port builder");
             let mut port = port_builder.open_native_async()?;
+            println!("created port SerialStream");
             // determine proper nmea sentences from bytes
             let mut sentence_retriever = NMEASentenceRetriever::new();
+            println!("created NMEASentenceRetriever");
 
             // turn off all not needed sentences
             self.configure_sentence_transmissions(&mut port).await?;
+            println!("configure sentence transmissions");
             // confirm airmar powered on correctly
             self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
+            println!("POST");
             // query for the altitude
             sentence_retriever.reset();
+            println!("reset 1");
             self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
+            println!("altitude");
             // listen for weather
             sentence_retriever.reset();
+            println!("reset 2");
             self.detect_weather(&mut port, tx, &mut sentence_retriever).await?;
+            println!("detect weather");
 
             Ok(())
         })
