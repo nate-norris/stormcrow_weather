@@ -36,6 +36,7 @@ impl AirmarT for AirmarSensorReal {
                 .stop_bits(StopBits::One)
                 .flow_control(FlowControl::None)
                 .timeout(std::time::Duration::from_secs(3));
+            println!("set port builder");
             let mut port = port_builder.open_native_async()?;
             // determine proper nmea sentences from bytes
             let mut sentence_retriever = NMEASentenceRetriever::new();
