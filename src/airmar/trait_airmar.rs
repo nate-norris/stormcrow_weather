@@ -47,10 +47,15 @@ pub trait AirmarT {
         fn(&str) -> anyhow::Result<AirmarEvent>, tx: &AirmarEventTx) 
         -> anyhow::Result<bool> {
 
+        println!("Received {} bytes: {:?}", bytes.len(), bytes);
+
         if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(bytes, retriever)? 
             .filter(|s| s.starts_with(expected.prefix())) {
+            println!("Matched expected sentence: {}", sentence);
             let event = interpret_fn(&sentence)?; //interpret the AirmarEvent
+            println!("event");
             tx.send(event).await?; // transmit the event
+            println!("tx send");
             return Ok(true);
         }
         Ok(false)
