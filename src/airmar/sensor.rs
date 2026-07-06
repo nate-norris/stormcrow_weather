@@ -36,22 +36,16 @@ impl AirmarT for AirmarSensorReal {
                 .stop_bits(StopBits::One)
                 .flow_control(FlowControl::None)
                 .timeout(std::time::Duration::from_secs(3));
-            println!("set port builder");
             let mut port = port_builder.open_native_async()?;
-            println!("created port SerialStream");
             // determine proper nmea sentences from bytes
             let mut sentence_retriever = NMEASentenceRetriever::new();
-            println!("created NMEASentenceRetriever");
 
             // turn off all not needed sentences
             self.configure_sentence_transmissions(&mut port).await?;
-            println!("configure sentence transmissions");
             // confirm airmar powered on correctly
             self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
-            println!("POST");
             // query for the altitude
             sentence_retriever.reset();
-            println!("reset 1");
             self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
             println!("altitude");
             // listen for weather
@@ -114,10 +108,11 @@ impl AirmarSensorReal {
 
         // read query response for 5 seconds
         let mut buf = [0u8; 64];
-        timeout(Duration::from_secs(5), async {
+        match timeout(Duration::from_secs(5), async {
             loop {
                 let n = port.read(&mut buf).await?;
                 if n == 0 {
+                    println!("no byte");
                     continue; // no bytes read
                 }
 
@@ -131,8 +126,17 @@ impl AirmarSensorReal {
                     return Ok::<(), anyhow::Error>(())
                 }
             }
-        }).await
-        .map_err(|_| anyhow::anyhow!("Altitude query time out"))??;
+        }).await {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => {
+                eprintln!("Altitude detection error: {:#}", e);
+                return Err(e);
+            }
+            Err(_) => {
+                anyhow::bail!("Altitude query timed out");
+            }
+        }
+        // .map_err(|_| anyhow::anyhow!("Altitude query time out"))??;
 
         Ok(())
     }
