@@ -61,7 +61,7 @@ fn init_speaker() -> SpeakerTx {
 // Initializes MM2T radio
 // On failure begins a SpeakerNotification::RadioError
 async fn init_mm2t(speaker_tx: &SpeakerTx) -> Option<Arc<MM2TTransport>> {
-    match MM2TTransport::start("/dev/ttyUSB0").await {
+    match MM2TTransport::start("/dev/ttyUSB1").await {
         Ok(r) => Some(Arc::new(r)),
         Err(e) => {
             logger::error_with("Failed mm2t init", e);
