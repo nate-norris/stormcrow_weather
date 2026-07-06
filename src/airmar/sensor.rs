@@ -30,7 +30,7 @@ impl AirmarT for AirmarSensorReal {
 
         Box::pin(async move {
             // setup port
-            let port_builder = tokio_serial::new("/dev/ttyUSB1", 4_800)
+            let port_builder = tokio_serial::new("/dev/ttyUSB0", 4_800)
                 .data_bits(DataBits::Eight)
                 .parity(Parity::None)
                 .stop_bits(StopBits::One)
