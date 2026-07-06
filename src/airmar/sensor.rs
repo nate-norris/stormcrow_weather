@@ -51,7 +51,7 @@ impl AirmarT for AirmarSensorReal {
             // listen for weather
             sentence_retriever.reset();
             println!("reset 2");
-            // self.detect_weather(&mut port, tx, &mut sentence_retriever).await?;
+            self.detect_weather(&mut port, tx, &mut sentence_retriever).await?;
             println!("detect weather");
 
             Ok(())
