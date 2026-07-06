@@ -39,6 +39,7 @@ pub trait AirmarT {
                 return Ok(Some(complete_sentence))
             }
         }
+        println!("returning None");
         Ok(None)
     }
 
