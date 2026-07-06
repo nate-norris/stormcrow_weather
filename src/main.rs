@@ -93,7 +93,6 @@ fn spawn_airmar_consumer(event_rx: AirmarEventRx, mm2t: Arc<MM2TTransport>,
     tokio::spawn(async move {
         airmar_consumer::airmar_consume_task(event_rx, speaker_tx.clone(),
             move |wind_full, wind_dir, temp, humidity, baro, alt| {
-            println!("{:?}", wind_full);
             let speaker_tx = speaker_tx.clone();
             let mm2t = Arc::clone(&mm2t);
 
