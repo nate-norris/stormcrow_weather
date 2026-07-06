@@ -46,7 +46,7 @@ impl AirmarT for AirmarSensorReal {
             self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // query for the altitude
             sentence_retriever.reset();
-            // self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
+            self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
             println!("altitude");
             // listen for weather
             sentence_retriever.reset();
