@@ -72,8 +72,8 @@ async fn init_mm2t(speaker_tx: &SpeakerTx) -> Option<Arc<MM2TTransport>> {
 }
 
 fn spawn_airmar_detector(tx: AirmarEventTx, speaker_tx: SpeakerTx) {
-    let _airmar = AirmarSensorReal;
-    let airmar = AirmarSensorMock;
+    let airmar = AirmarSensorReal;
+    let _airmar = AirmarSensorMock;
 
     tokio::spawn(async move {
         // initiate transmitting altitude and weather
