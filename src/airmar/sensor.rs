@@ -92,7 +92,6 @@ impl AirmarSensorReal {
                     }
                     Ok(false) => {
                         println!("sentence was not expected")
-                        // Sentence wasn't the one we're looking for.
                     }
                     Err(e) => {
                         println!("process_expected_sentence error: {:#}", e);
