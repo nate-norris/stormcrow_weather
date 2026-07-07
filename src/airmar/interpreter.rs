@@ -41,9 +41,8 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent>
 
     // split comma delimited String and check for 0 at select indices
     let fields: Vec<&str> = nmea_sentence.split(',').collect();
-    let zero_indices: [usize; 13] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 
-        11, 12, 13, 16];
-        /// 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 17
+    let zero_indices: [usize; 12] = [2, 3, 4, 5, 6, 8, 9, 10, 
+        11, 12, 13, 17];
 
     for &i in &zero_indices {
         if fields.get(i).is_none() {
