@@ -61,7 +61,7 @@ pub(crate) fn interpret_wimda(nmea_sentence: &str)
 
     println!("ws:{:?}, wd:{:?}, temp:{:?}, hum:{:?}, baro:{:?}",
         mda.wind_speed_ms,
-        mda.wind_direction_magnetic,
+        mda.wind_direction_true,
         mda.air_temp_deg,
         mda.rel_humidity,
         mda.pressure_in_hg
