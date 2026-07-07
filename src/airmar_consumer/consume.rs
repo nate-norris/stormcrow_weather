@@ -26,13 +26,12 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
             Some(event) = event_rx.recv() => {
             // while let Some(event) = event_rx.recv().await {
                 match (&state, &event) {
-                    // failed post read
+                    // good post read
                     (ConsumerState::WaitingForPOST, AirmarEvent::Post(true)) => {
                         state = ConsumerState::WaitingForAltitude; 
                     }
-                    // good post read
+                    // failed post read
                     (ConsumerState::WaitingForPOST, AirmarEvent::Post(false)) => {
-                        println!("FAILED 2");
                         let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                     }
                     // altitude read
@@ -44,7 +43,6 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                             watchdog = Some(Box::pin(sleep(timeout)));
                         } else {
                             logger::error("Failed to clear altitude initialization");
-                            println!("FAILED 1");
                             let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                         }   
                     }
@@ -92,7 +90,6 @@ fn clear_wimda(wind_full: f32, wind_dir: f32, temp: f32, humidity: f32, baro: f3
 
     println!("Clear WIMDA: {} {} {} {} {}",
         wind_ok, dir_ok, temp_ok, humidity_ok, baro_ok);
-    println!();
 
     wind_ok && dir_ok && temp_ok && humidity_ok && baro_ok
 }

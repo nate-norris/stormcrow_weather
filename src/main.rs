@@ -82,7 +82,6 @@ fn spawn_airmar_detector(tx: AirmarEventTx, speaker_tx: SpeakerTx) {
                 "Failed airmar",
                 e
             );
-            println!("FAILED 3");
             let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
         }
     });

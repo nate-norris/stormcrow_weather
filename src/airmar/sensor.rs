@@ -47,12 +47,9 @@ impl AirmarT for AirmarSensorReal {
             // query for the altitude
             sentence_retriever.reset();
             self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
-            println!("altitude");
             // listen for weather
             sentence_retriever.reset();
-            println!("reset 2");
             self.detect_weather(&mut port, tx, &mut sentence_retriever).await?;
-            println!("detect weather");
 
             Ok(())
         })
@@ -91,7 +88,6 @@ impl AirmarSensorReal {
                     &tx
                 ).await {
                     Ok(true) => {
-                        println!("POST succeeded");
                         return Ok::<(), anyhow::Error>(());
                     }
                     Ok(false) => {
@@ -123,7 +119,6 @@ impl AirmarSensorReal {
             loop {
                 let n = port.read(&mut buf).await?;
                 if n == 0 {
-                    println!("no byte");
                     continue; // no bytes read
                 }
 
