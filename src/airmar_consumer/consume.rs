@@ -32,7 +32,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                     }
                     // good post read
                     (ConsumerState::WaitingForPOST, AirmarEvent::Post(false)) => {
-                        println!("failed post read");
+                        println!("FAILED 2");
                         let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                     }
                     // altitude read
@@ -44,6 +44,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                             watchdog = Some(Box::pin(sleep(timeout)));
                         } else {
                             logger::error("Failed to clear altitude initialization");
+                            println!("FAILED 1");
                             let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                         }   
                     }
