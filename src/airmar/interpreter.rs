@@ -47,12 +47,13 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent>
 
     for &i in &zero_indices {
         if fields.get(i).is_none() {
-            logger::error("Malformed POST sentence");
             anyhow::bail!("Malformed POST sentence, missing field at index {}", i);
         }
     }
     let all_zero: bool = zero_indices.iter().all(|&i| 
         fields.get(i) == Some(&"0"));
+
+    if !all_zero {logger::error("Malformed POST sentence")}
 
     Ok(AirmarEvent::Post(all_zero))
 }
