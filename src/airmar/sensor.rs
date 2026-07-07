@@ -159,6 +159,7 @@ impl AirmarSensorReal {
             if n == 0 {
                 continue;
             }
+            println!("{:?}", &buf[..n]);
 
             if let Err(e) = Self::process_expected_sentence(
                 &buf[..n], 
