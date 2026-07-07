@@ -83,14 +83,25 @@ impl AirmarSensorReal {
                     continue; // no bytes read
                 }
 
-                if Self::process_expected_sentence(
+                match Self::process_expected_sentence(
                     &buf[..n], 
                     retriever, 
                     ExpectedSentence::Post, 
                     interpret_post, 
                     &tx
-                ).await? {
-                    return Ok::<(), anyhow::Error>(())
+                ).await {
+                    Ok(true) => {
+                        println!("POST succeeded");
+                        return Ok::<(), anyhow::Error>(());
+                    }
+                    Ok(false) => {
+                        println!("sentence was not expected")
+                        // Sentence wasn't the one we're looking for.
+                    }
+                    Err(e) => {
+                        println!("process_expected_sentence error: {:#}", e);
+                        return Err(e);
+                    }
                 }
             }
         }).await
