@@ -88,8 +88,5 @@ fn clear_wimda(wind_full: f32, wind_dir: f32, temp: f32, humidity: f32, baro: f3
     let humidity_ok = humidity >= 0.0 && humidity <= 100.0;
     let baro_ok = baro >= 9.5 && baro <= 32.0;
 
-    println!("Clear WIMDA: {} {} {} {} {}",
-        wind_ok, dir_ok, temp_ok, humidity_ok, baro_ok);
-
     wind_ok && dir_ok && temp_ok && humidity_ok && baro_ok
 }
