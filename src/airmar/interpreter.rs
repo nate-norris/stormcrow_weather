@@ -82,6 +82,8 @@ pub(crate) fn interpret_altitude(nmea_sentence: &str)
 pub(crate) fn interpret_wimda(nmea_sentence: &str)
     -> anyhow::Result<AirmarEvent> {
 
+    println!("{}", nmea_sentence);
+
     let s = parse_nmea_sentence(nmea_sentence)
         .map_err(|e| anyhow::anyhow!(e.to_string()))?;
     let mda = parse_mda(s)
