@@ -79,6 +79,7 @@ impl AirmarSensorReal {
         timeout(Duration::from_secs(20), async {
             loop {
                 let n = port.read(&mut buf).await?;
+                println!("{}", n);
                 if n == 0 {
                     continue; // no bytes read
                 }
