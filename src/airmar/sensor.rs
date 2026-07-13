@@ -87,7 +87,7 @@ impl AirmarSensorReal {
                     &buf[..n], 
                     retriever, 
                     ExpectedSentence::Gga, 
-                    interpret_altitude, 
+                    interpret_gga, 
                     &tx
                 ).await {
                     Ok(true) => {
