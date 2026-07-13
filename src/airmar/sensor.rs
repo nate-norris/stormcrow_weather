@@ -10,13 +10,15 @@
 //! ↓
 //! tx.send(event)
 use std::pin::Pin;
+use std::str::MatchIndices;
 use tokio_serial::{SerialStream, SerialPortBuilderExt, DataBits, Parity, 
     StopBits, FlowControl};
 use tokio::io::{AsyncWriteExt, AsyncReadExt};
 use tokio::time::{timeout, Duration};
 
 use super::models::{AirmarEventTx, ExpectedSentence};
-use super::interpreter::{interpret_post, interpret_altitude, interpret_wimda};
+use super::interpreter::{interpret_post, interpret_altitude, interpret_wimda,
+    interpret_gga};
 use super::trait_airmar::AirmarT;
 use super::nmea_sentence::NMEASentenceRetriever;
 use crate::logger;
@@ -42,14 +44,16 @@ impl AirmarT for AirmarSensorReal {
 
             // turn off all not needed sentences
             self.configure_sentence_transmissions(&mut port).await?;
+            // check gps values
+            self.verify_gga(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // confirm airmar powered on correctly
-            self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
+            // self.power_on_self_test(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // query for the altitude
-            sentence_retriever.reset();
-            self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
+            // sentence_retriever.reset();
+            // self.detect_altitude(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // listen for weather
-            sentence_retriever.reset();
-            self.detect_weather(&mut port, tx, &mut sentence_retriever).await?;
+            // sentence_retriever.reset();
+            // self.detect_weather(&mut port, tx, &mut sentence_retriever).await?;
 
             Ok(())
         })
@@ -62,6 +66,45 @@ impl AirmarSensorReal {
         -> anyhow::Result<()> {
         let bytes = Self::package_sentence("PAMTC,EN,ALL,0");
         port.write_all(&bytes).await?;
+        Ok(())
+    }
+
+    async fn verify_gga(&self, port: &mut SerialStream,
+        tx: AirmarEventTx, retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
+        let bytes = Self::package_sentence("$PAMTC,EN,GGA,1");
+        port.write_all(&bytes).await?;
+        // $PAMTC,EN,GSA,1
+        // $PAMTC,EN,RMC,1
+        let mut buf = [0u8; 64];
+        timeout(Duration::from_secs(5), async {
+            loop {
+                let n = port.read(&mut buf).await?;
+                if n == 0 {
+                    continue; // no bytes read
+                }
+
+                match Self::process_expected_sentence(
+                    &buf[..n], 
+                    retriever, 
+                    ExpectedSentence::Gga, 
+                    interpret_altitude, 
+                    &tx
+                ).await {
+                    Ok(true) => {
+                        return Ok::<(), anyhow::Error>(());
+                    }
+                    Ok(false) => {
+                        println!("sentence was not expected")
+                    }
+                    Err(e) => {
+                        println!("process_expected_sentence error: {:#}", e);
+                        return Err(e);
+                    }
+                }
+            }
+        }).await
+        .map_err(|_| anyhow::anyhow!("GGA query time out"))??;
+
         Ok(())
     }
 
