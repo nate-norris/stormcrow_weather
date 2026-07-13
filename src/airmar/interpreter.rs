@@ -116,3 +116,10 @@ pub(crate) fn interpret_wimda(nmea_sentence: &str)
         baro 
     }))
 }
+
+pub(crate) fn interpret_gga(nmea_sentence: &str)
+    -> anyhow::Result<Option<AirmarEvent>> {
+    println!("{}", nmea_sentence);
+
+    Ok(Some(AirmarEvent::Gga(true)))
+}
