@@ -114,7 +114,7 @@ impl AirmarSensorReal {
 
         // read query response for 5 seconds
         let mut buf = [0u8; 64];
-        match timeout(Duration::from_secs(5), async {
+        match timeout(Duration::from_secs(10), async {
             loop {
                 let n = port.read(&mut buf).await?;
                 if n == 0 {
