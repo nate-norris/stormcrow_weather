@@ -72,6 +72,8 @@ impl AirmarSensorReal {
     async fn verify_gga(&self, port: &mut SerialStream,
         tx: AirmarEventTx, retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
         let bytes = Self::package_sentence("$PAMTC,EN,GGA,1,5");
+        println!("VERIFY GGA");
+        println!("{:?}", &bytes);
         port.write_all(&bytes).await?;
         // $PAMTC,EN,GSA,1
         // $PAMTC,EN,RMC,1
