@@ -66,6 +66,7 @@ pub(crate) fn interpret_altitude(nmea_sentence: &str)
     -> anyhow::Result<AirmarEvent> {
 
     let fields: Vec<&str> = nmea_sentence.split(',').collect();
+    println!("{:?}", fields);
     if fields.len() != 5 {
         anyhow::bail!("Malformed altitude sentence, improper field length");
     }
