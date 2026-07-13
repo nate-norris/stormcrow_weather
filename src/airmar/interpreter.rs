@@ -73,7 +73,7 @@ pub(crate) fn interpret_altitude(nmea_sentence: &str)
 
     let altitude_m = fields[2].trim().parse::<f32>()?;
     // default value set
-    if altitude_m == 0.0 && fields[3] == "0" && fields[4] == "2" {
+    if altitude_m == 0.0 && fields[3] == "0" && fields[4].chars().next().unwrap() == '2' {
         return Ok(None);
     }
     
