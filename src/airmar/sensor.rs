@@ -105,7 +105,7 @@ impl AirmarSensorReal {
         Ok(())
     }
 
-    async fn detect_altitude(&self, port: &mut SerialStream, tx: AirmarEventTx, 
+    async fn detect_altitude_dprc(&self, port: &mut SerialStream, tx: AirmarEventTx, 
         retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
 
         // send query for altitude response
@@ -144,6 +144,64 @@ impl AirmarSensorReal {
         // .map_err(|_| anyhow::anyhow!("Altitude query time out"))??;
 
         Ok(())
+    }
+
+    async fn detect_altitude(&self, port: &mut SerialStream, tx: AirmarEventTx,
+        retriever: &mut NMEASentenceRetriever) -> anyhow::Result<()> {
+
+        let result = timeout(Duration::from_secs(60), async {
+            let mut buf = [0u8; 64];
+
+            loop {
+                // Query altitude
+                let bytes = Self::package_sentence("PAMTC,ALT,Q");
+                port.write_all(&bytes).await?;
+
+                // Wait for the response to this query
+                loop {
+                    let n = port.read(&mut buf).await?;
+
+                    if n == 0 {
+                        continue;
+                    }
+
+                    if Self::process_expected_sentence(
+                        &buf[..n],
+                        retriever,
+                        ExpectedSentence::Alt,
+                        interpret_altitude,
+                        &tx,
+                    )
+                    .await?
+                    {
+                        return Ok::<(), anyhow::Error>(());
+                    }
+
+                    // process_expected_sentence returned false:
+                    // - not the sentence we wanted
+                    // - OR altitude interpreter returned None
+                    //
+                    // Send another query after a delay.
+                    break;
+                }
+
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            }
+        })
+        .await;
+
+        match result {
+            Ok(Ok(())) => Ok(()),
+
+            Ok(Err(e)) => {
+                eprintln!("Altitude detection failed: {:#}", e);
+                Err(e)
+            }
+
+            Err(_) => {
+                anyhow::bail!("Altitude query timed out waiting for valid altitude");
+            }
+        }
     }
 
     async fn detect_weather(&self, port: &mut SerialStream, tx: AirmarEventTx, 
