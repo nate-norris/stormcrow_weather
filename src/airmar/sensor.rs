@@ -76,7 +76,7 @@ impl AirmarSensorReal {
         // $PAMTC,EN,GSA,1
         // $PAMTC,EN,RMC,1
         let mut buf = [0u8; 64];
-        timeout(Duration::from_secs(5), async {
+        timeout(Duration::from_secs(20), async {
             loop {
                 let n = port.read(&mut buf).await?;
                 if n == 0 {
