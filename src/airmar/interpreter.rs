@@ -37,7 +37,7 @@ use utils::logger;
 //     Result<AirmarEvent, Box<dyn std::error::Error + Send + 'static>> {
 // pub(crate) fn interpret_post(nmea_sentence: String)
     // -> Result<AirmarEvent, Box<dyn std::error::Error>> {
-pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent> {
+pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<Option<AirmarEvent>> {
 
     // split comma delimited String and check for 0 at select indices
     let fields: Vec<&str> = nmea_sentence.split(',').collect();
@@ -54,7 +54,7 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent>
 
     if !all_zero {logger::error("Malformed POST sentence")}
 
-    Ok(AirmarEvent::Post(all_zero))
+    Ok(Some(AirmarEvent::Post(all_zero)))
 }
 
 /// Retrieve altitude provided by $PAMTC,ALT query response
@@ -63,7 +63,7 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<AirmarEvent>
 ///     where the value of fixed altitude is from -999.0 to +40,000.0 meters
 pub(crate) fn interpret_altitude(nmea_sentence: &str) 
     // -> Result<AirmarEvent, Box<dyn std::error::Error>> {
-    -> anyhow::Result<AirmarEvent> {
+    -> anyhow::Result<Option<AirmarEvent>> {
 
     let fields: Vec<&str> = nmea_sentence.split(',').collect();
     println!("{:?}", fields);
@@ -72,8 +72,12 @@ pub(crate) fn interpret_altitude(nmea_sentence: &str)
     }
 
     let altitude_m = fields[2].trim().parse::<f32>()?;
+    // default value set
+    if altitude_m == 0.0 && fields[3] == "0" && fields[4] == "2" {
+        return Ok(None);
+    }
     
-    Ok(AirmarEvent::Altitude { meters: (altitude_m) })
+    Ok(Some(AirmarEvent::Altitude { meters: (altitude_m) }))
 }
 
 /// Retrieve weather data provided by $WIMDA sentence
@@ -81,9 +85,7 @@ pub(crate) fn interpret_altitude(nmea_sentence: &str)
 /// This function uses nmea crate to parse the sentence and will return any errors
 /// in creating the AirmarEvent.
 pub(crate) fn interpret_wimda(nmea_sentence: &str)
-    -> anyhow::Result<AirmarEvent> {
-
-    println!("{}", nmea_sentence);
+    -> anyhow::Result<Option<AirmarEvent>> {
 
     let s = parse_nmea_sentence(nmea_sentence)
         .map_err(|e| anyhow::anyhow!(e.to_string()))?;
@@ -106,11 +108,11 @@ pub(crate) fn interpret_wimda(nmea_sentence: &str)
         return Err(anyhow::anyhow!("Missing required WIMDA fields"));
     };
 
-    Ok(AirmarEvent::Wimda { 
+    Ok(Some(AirmarEvent::Wimda { 
         wind_full, 
         wind_dir, 
         temp, 
         humidity, 
         baro 
-    })
+    }))
 }
