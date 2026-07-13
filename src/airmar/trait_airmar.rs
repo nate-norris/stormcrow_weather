@@ -44,14 +44,16 @@ pub trait AirmarT {
 
     async fn process_expected_sentence(bytes: &[u8], retriever: 
         &mut NMEASentenceRetriever, expected: ExpectedSentence, interpret_fn: 
-        fn(&str) -> anyhow::Result<AirmarEvent>, tx: &AirmarEventTx) 
+        fn(&str) -> anyhow::Result<Option<AirmarEvent>>, tx: &AirmarEventTx) 
         -> anyhow::Result<bool> {
 
         if let Some(sentence) = <Self as AirmarT>::await_retriever_sentence(bytes, retriever)? 
             .filter(|s| s.starts_with(expected.prefix())) {
-            let event = interpret_fn(&sentence)?; //interpret the AirmarEvent
-            tx.send(event).await?; // transmit the event
-            return Ok(true);
+            if let Some(event) = interpret_fn(&sentence)? {
+                tx.send(event).await?;
+                return Ok(true);
+            }
+            return Ok(false);
         }
         Ok(false)
     }
