@@ -43,7 +43,7 @@ impl AirmarT for AirmarSensorReal {
             let mut sentence_retriever = NMEASentenceRetriever::new();
 
             // turn off all not needed sentences
-            self.configure_sentence_transmissions(&mut port).await?;
+            // self.configure_sentence_transmissions(&mut port).await?;
             // check gps values
             self.verify_gga(&mut port, tx.clone(), &mut sentence_retriever).await?;
             // confirm airmar powered on correctly
@@ -79,10 +79,10 @@ impl AirmarSensorReal {
         timeout(Duration::from_secs(20), async {
             loop {
                 let n = port.read(&mut buf).await?;
-                println!("{}", n);
                 if n == 0 {
                     continue; // no bytes read
                 }
+                println!("{}", n);
 
                 match Self::process_expected_sentence(
                     &buf[..n], 
