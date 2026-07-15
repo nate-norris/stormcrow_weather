@@ -11,7 +11,6 @@ pub(crate) enum NMEASentenceState {
 
 pub enum AirmarEvent {
     Post(bool),
-    Altitude { meters: f32 },
     Wimda {
         wind_full: f32,
         wind_dir: f32,
@@ -19,14 +18,13 @@ pub enum AirmarEvent {
         humidity: f32,
         baro: f32,
     },
-    Gga(bool),
+    Gga { meters: f32 },
 }
 // event ready for consumer
 pub type AirmarEventTx = mpsc::Sender<AirmarEvent>;
 
 pub(crate) enum ExpectedSentence {
     Post,
-    Alt,
     Wimda,
     Gga,
 }
@@ -34,7 +32,6 @@ impl ExpectedSentence {
     pub(crate) fn prefix(&self) -> &'static str {
         match self {
             ExpectedSentence::Post => "$PAMTR,POST",
-            ExpectedSentence::Alt => "$PAMTR,ALT",
             ExpectedSentence::Wimda => "$WIMDA",
             ExpectedSentence::Gga => "$GPGGA",
         }
