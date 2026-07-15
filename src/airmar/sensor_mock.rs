@@ -48,7 +48,7 @@ impl AirmarT for AirmarSensorMock {
             if !Self::process_expected_sentence(
                 &bytes, 
                 &mut retriever, 
-                ExpectedSentence::Alt, 
+                ExpectedSentence::Gga, 
                 interpret_altitude, 
                 &tx
             ).await? {
@@ -89,8 +89,8 @@ fn mock_post_body() -> String {
 
 fn mock_pamtc_alt_body() -> String {
     let mut rng = rand::rng();
-
-    format!("PAMTC,ALT,{:.1},0,2",
+    
+    format!("GPGGA,201211.90,3322.1556,N,11715.8322,W,1,9,0.8,{:.1},M,-34.5,M,,",
         rng.random_range(2800.0..3200.0), // random altitude meters
     )
 }
