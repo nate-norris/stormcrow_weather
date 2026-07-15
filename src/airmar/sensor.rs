@@ -10,7 +10,6 @@
 //! ↓
 //! tx.send(event)
 use std::pin::Pin;
-use std::str::MatchIndices;
 use tokio_serial::{SerialStream, SerialPortBuilderExt, DataBits, Parity, 
     StopBits, FlowControl};
 use tokio::io::{AsyncWriteExt, AsyncReadExt};
