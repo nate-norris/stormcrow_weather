@@ -35,7 +35,7 @@ pub async fn airmar_consume_task<F, Fut>(mut event_rx: AirmarEventRx, speaker_tx
                         let _ = speaker_tx.send(SpeakerNotification::AirmarError).await;
                     }
                     // altitude read
-                    (ConsumerState::WaitingForAltitude, AirmarEvent::Altitude { meters }) => {
+                    (ConsumerState::WaitingForAltitude, AirmarEvent::Gga { meters }) => {
                         if clear_altitude(*meters) {
                             state = ConsumerState::ReadyForWeather;
                             altitude = Some(*meters);
