@@ -8,7 +8,7 @@ use utils::logger;
 /// The airmar will provide sentences in the following structure:
 ///     $PAMTR,POST,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,,,,,WX
 ///     $PAMTR,POST,0,0,0,0,0,0,0,0,0,0,0,0,0,,0,0,,,,,WX
-///     WXS1500 has provided: $PAMTR,POST,0,0,0,0,0,,0,0,0,0,0,0,,,,0,,,,,WX*4D
+///     WXS150 has provided: $PAMTR,POST,0,0,0,0,0,,0,0,0,0,0,0,,,,0,,,,,WX*4D
 ///     <1> = Internal communication between microprocessors 
 ///     <2> = Format code 
 ///     <3> = Factory EEPROM 
@@ -33,10 +33,6 @@ use utils::logger;
 ///     products described in this specification.
 /// 
 /// 
-// pub(crate) fn interpret_post(...) -> 
-//     Result<AirmarEvent, Box<dyn std::error::Error + Send + 'static>> {
-// pub(crate) fn interpret_post(nmea_sentence: String)
-    // -> Result<AirmarEvent, Box<dyn std::error::Error>> {
 pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<Option<AirmarEvent>> {
 
     // split comma delimited String and check for 0 at select indices
@@ -57,27 +53,61 @@ pub(crate) fn interpret_post(nmea_sentence: &str) -> anyhow::Result<Option<Airma
     Ok(Some(AirmarEvent::Post(all_zero)))
 }
 
-/// Retrieve altitude provided by $PAMTC,ALT query response
+/// Retrieve altitude provided from notifications for PAMTC,EN,GGA
 /// 
-/// The response is formatted as $PAMTR,ALT,[fixed altitude],[2d mode settings],[baro settings]
-///     where the value of fixed altitude is from -999.0 to +40,000.0 meters
+/// Sample sentence:
+/// $GPGGA,201211.90,3322.1556,N,11715.8322,W,1,9,0.8,219.8,M,-34.5,M,,*65
+/// 
+/// GPGGA is formatted as:
+///     <1> UTC of position, in the form hhmmss 
+///     <2> Latitude, to the nearest .0001 minute
+///     <3> N if field <2> is North Latitude 
+///         S if field <2> is South Latitude 
+///     <4> Longitude, to the nearest .0001 minute 
+///     <5> E if field <4> is East Longitude 
+///         W if field <4> is West Longitude 
+///     <6> GPS quality indicator: 
+///         0 = Fix not available or invalid 
+///         1 = GPS SPS Mode, fix valid 
+///         2 = Differential GPS, SPS Mode, fix valid 
+///         3 = GPS PPS Mode, fix valid 
+///         4 = Real Time Kinematic (RTK) 
+///         5 = Float RTK 
+///         6 = Estimated (dead reckoning) Mode 
+///         7 = Manual Input Mode 
+///         8 = Simulator Mode 
+/// 
+///         When providing data from the WX Series WeatherStation Sensor’s 
+///         internal GPS, the only valid values for the GPS quality indicator 
+///         are 0, 1, and 2. 
+///     <7> Number of satellites in use, 0-12 
+///     <8> Horizontal dilution of precision (HDOP) 
+///     <9> Altitude relative to mean-sea-level (geoid), meters (to the nearest 
+///         whole meter) 
+///     <10> M 
+///     <11> Geoidal separation, meters (to the nearest whole meter).  In the WX 
+///         Series WeatherStation Sensor, this field contains the separation 
+///         data, if available, otherwise, it is not provided, and appears as a 
+///         null field. 
+///     <12> M.  In the WX Series WeatherStation Sensor, this field contains M, 
+///         if separation data is available, otherwise, it is not provided, and 
+///         appears as a null field. 
+///     <13> Age of Differential GPS data, seconds. This field is not provided 
+///         by the WX Series WeatherStation Sensor, and appears as a null field.
+///     <14> Differential reference station ID, 0000-1023.  This field is not 
+///         provided by the WX Series WeatherStation Sensor, and appears as a 
+///         null field
 pub(crate) fn interpret_altitude(nmea_sentence: &str) 
-    // -> Result<AirmarEvent, Box<dyn std::error::Error>> {
     -> anyhow::Result<Option<AirmarEvent>> {
 
     let fields: Vec<&str> = nmea_sentence.split(',').collect();
-    println!("{:?}", fields);
-    if fields.len() != 5 {
+    if fields.len() != 15 {
         anyhow::bail!("Malformed altitude sentence, improper field length");
     }
 
-    let altitude_m = fields[2].trim().parse::<f32>()?;
-    // default value set
-    if altitude_m == 0.0 && fields[3] == "0" && fields[4].chars().next().unwrap() == '2' {
-        return Ok(None);
-    }
+    let altitude_m = fields[10].trim().parse::<f32>()?;
     
-    Ok(Some(AirmarEvent::Altitude { meters: (altitude_m) }))
+    Ok(Some(AirmarEvent::Gga { meters: (altitude_m) }))
 }
 
 /// Retrieve weather data provided by $WIMDA sentence
@@ -115,11 +145,4 @@ pub(crate) fn interpret_wimda(nmea_sentence: &str)
         humidity, 
         baro 
     }))
-}
-
-pub(crate) fn interpret_gga(nmea_sentence: &str)
-    -> anyhow::Result<Option<AirmarEvent>> {
-    println!("{}", nmea_sentence);
-
-    Ok(Some(AirmarEvent::Gga(true)))
 }
