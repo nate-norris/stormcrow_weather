@@ -106,7 +106,7 @@ pub(crate) fn interpret_altitude(nmea_sentence: &str)
         anyhow::bail!("Malformed altitude sentence, improper field length");
     }
 
-    let altitude_m = fields[10].trim().parse::<f32>()?;
+    let altitude_m = fields[9].trim().parse::<f32>()?;
     
     Ok(Some(AirmarEvent::Gga { meters: (altitude_m) }))
 }
